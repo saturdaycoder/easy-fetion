@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView  
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="您的手机号或邮箱地址"
+    />
+<EditText 
+    android:id="@+id/editAcc" 
+    android:text=""
+    android:layout_height="50px" 
+    android:layout_width="200px" android:inputType="number"/>
+<TextView 
+    android:text="您的飞信密码" 
+    android:id="@+id/textView1" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content"
+    />
+<EditText 
+    android:id="@+id/editAccPasswd" 
+    android:text=""
+    android:layout_height="50px" 
+    android:layout_width="200px" android:inputType="textPassword"/>
+<Button 
+    android:text="确认" 
+    android:id="@+id/btnConfirmAccountSetting" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content"
+    />
+</LinearLayout>

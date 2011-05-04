@@ -28,7 +28,7 @@ public class SipcCommand extends SipcMessage {
 		"A"
 	};
 	
-	CommandType getCommandType() {
+	protected CommandType getCommandType() {
 		String strs[] = this.cmdline.split(" ");
 		if (strs.length <= 1) return CommandType.UNKNOWN;
 		String cmdtype = strs[0];
@@ -40,10 +40,19 @@ public class SipcCommand extends SipcMessage {
 		return CommandType.UNKNOWN;
 	}
 	
-	String getCommandArg() {
+	protected String getCommandArg() {
 		String strs[] = this.cmdline.split(" ");
 		if (strs.length <= 1)
 			return "";
 		return strs[1];
+	}
+	
+	protected static long callid = 1;
+	protected long generateCallId() {
+		long c = -1;
+		synchronized(SipcCommand.class) {
+			c = ++callid;
+		}
+		return c;
 	}
 }

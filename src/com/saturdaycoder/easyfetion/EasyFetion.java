@@ -137,7 +137,7 @@ public class EasyFetion extends Activity
  
 		});*/
         lvContacts.setOnItemClickListener(new OnItemClickListener() {
-        	@Override
+        	//@Override
         	public void onItemClick(AdapterView<?> a, View v, int position, long id) 
         	{
         		selectedContacts.clear();
@@ -167,7 +167,7 @@ public class EasyFetion extends Activity
 				EasyFetionThread.ThreadState ts = (EasyFetionThread.ThreadState)msg.obj;
 				EasyFetionThread.State state = ts.state;
 				FetionMsg fm = (FetionMsg)ts.arg;
-				Log.d(TAG, "work thread reports " + state.toString());
+				Log.v(TAG, "work thread reports " + state.toString());
 				
 				Intent intent;
 				Bundle bundle;
@@ -293,7 +293,7 @@ public class EasyFetion extends Activity
         
         btnSend.setOnClickListener(new Button.OnClickListener()
         {
-        	@Override
+        	//@Override
         	public void onClick(View v) {
         		
         		String text = editMsg.getText().toString();

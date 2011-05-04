@@ -23,7 +23,7 @@ import java.util.LinkedHashMap;
 public class EasyFetionThread extends Thread 
 {
 	public Queue<FetionMsg> pendingSmsQueue;
-	
+	public Queue<FetionMsg> failedSmsQueue;
 	private static final String TAG = "EasyFetion";
 
     public SystemConfig sysConfig;
@@ -51,7 +51,7 @@ public class EasyFetionThread extends Thread
     	verification  = new FetionPictureVerification();
     	contactList = new LinkedHashMap<String, FetionContact>();
     	pendingSmsQueue = new LinkedList<FetionMsg>();
-    	
+    	failedSmsQueue = new LinkedList<FetionMsg>();
     }
     
     public class ThreadCommand {
@@ -113,7 +113,9 @@ public class EasyFetionThread extends Thread
     	MSG_RECEIVED,
     	MSG_FAILED,
     	
-    	THREAD_EXIT
+    	THREAD_EXIT,
+    	
+    	NETWORK_DOWN,
     }
     
     public enum Command {
@@ -388,14 +390,39 @@ public class EasyFetionThread extends Thread
         notifyState(State.CONTACT_GET_SUCC, null);
 
         
+        long lastHeartBeat = System.currentTimeMillis();
+        long nextHeartBeat = lastHeartBeat;
         
         
-        
-        
+        int nomsgcount = 0;
         while (true) {
+        	// heart beat
+        	long now = System.currentTimeMillis();
+        	if (now > (nextHeartBeat + lastHeartBeat) / 2) {
+        		try {
+        			SipcCommand hbCmd = new SipcHeartBeatCommand(sysConfig.sId);
+        			os.write(hbCmd.toString().getBytes());
+        			Log.d(TAG, "Sent heart beat command" );
+        			Log.d(TAG, hbCmd.toString());
+        			SipcResponse res = (SipcResponse)parser.parse(is);
+        			if (res != null) {
+        				Log.d(TAG, "received heart beat response");
+        				Log.d(TAG, res.toString());
+	        			if (res.getResponseCode() == 200) {//OK
+	        				String s = res.getHeaderValue("X");
+	        				lastHeartBeat = System.currentTimeMillis();
+	        				nextHeartBeat = Long.parseLong(s) * 1000 + lastHeartBeat;
+	        			}
+        			}
+        		} catch (Exception e) {
+        			Log.e(TAG, "error processing heart beat sipc connection: " + e.getMessage());
+        		}
+        	}
+        	
+        	// handle pending sending queue
         	if (pendingSmsQueue.size() > 0) {
         		Log.e(TAG, "detected pending sms queue size = " + pendingSmsQueue.size());
-        		FetionMsg msg = pendingSmsQueue.peek();
+        		FetionMsg msg = pendingSmsQueue.poll();
         		boolean online = true;
         		if (!online) { // send direct SMS
 	        		try {
@@ -403,9 +430,9 @@ public class EasyFetionThread extends Thread
 		        				msg.contact.sipUri, msg.msg);
 		        		//		sysConfig.userUri, msg.msg);
 		        		os.write(cmd.toString().getBytes());
-		        		Log.e(TAG, "send msg sent: \"" + cmd.toString() + "\"");
+		        		Log.d(TAG, "sent msg: \"" + cmd.toString() + "\"");
 		        		notifyState(State.MSG_TRANSFERED, null);
-		        		pendingSmsQueue.poll();
+		        		//pendingSmsQueue.poll();
 	        		} catch (Exception e) {
 	        			Log.e(TAG, "work thread fails to send sms: " + e.getMessage());
 	        			notifyState(State.MSG_FAILED, null);
@@ -414,10 +441,10 @@ public class EasyFetionThread extends Thread
 	        		try {
 	        			SipcResponse res = (SipcResponse)parser.parse(is);
 	        			if (res == null) {
-	        				Log.e(TAG, "error receiving response");
+	        				Log.d(TAG, "error receiving response");
 	        				notifyState(State.MSG_FAILED, null);
 	        			}
-		        		Log.e(TAG, "send msg received: \"" + res.toString() + "\"");
+		        		Log.d(TAG, "send msg received: \"" + res.toString() + "\"");
 		        		if (res.getResponseCode() == 280) {
 		        			notifyState(State.MSG_RECEIVED, null);
 		        		} else {
@@ -438,39 +465,67 @@ public class EasyFetionThread extends Thread
         				SipcResponse response = (SipcResponse)parser.parse(is);
         				Log.e(TAG, "succeeded starting chat: " + response.toString());
         			} catch (Exception e) {
-        				Log.e(TAG, "send start chat command failed");
-        				continue;
+        				Log.e(TAG, "send start chat command failed: "+ e.getMessage());
+        				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
+        					failedSmsQueue.add(msg);
+        					notifyState(State.NETWORK_DOWN, null);
+        					return;
+        				}
+        				else continue;
         			}
         			
         			try {
         				SipcCommand sendMsgCmd = new SipcSendMsgCommand(sysConfig.sId, 
         						msg.contact.sipUri, msg.msg);
         				os.write(sendMsgCmd.toString().getBytes());
-        				Log.e(TAG, "Sent command: " + sendMsgCmd.toString());
-        				SipcMessage m = (SipcMessage)parser.parse(is);
-        				Log.e(TAG, "succeeded sending msg: " + m.toString());
-        				notifyState(State.MSG_TRANSFERED, msg);
-		        		pendingSmsQueue.poll();
-		        		// write the sent message to sms database
-		        		if (msg.contact.mobileNumber != null 
-		        				&& !msg.contact.mobileNumber.equals("")) {
-		        			smsDbWriter.insertSentSms(msg.contact.mobileNumber,
-		        						System.currentTimeMillis(), msg.msg);
-		        		}
-		        		else {
-		        			//notifyState(State.MSG_FAILED, msg);
-		        			Log.e(TAG, "the mobileno of the receiver is invalid");
-		        		}
+        				Log.d(TAG, "Sent command: " + sendMsgCmd.toString());
+        			} catch (Exception e) {
+        				Log.e(TAG, "sending command failed");
+        				failedSmsQueue.add(msg);
+        				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
+        					notifyState(State.NETWORK_DOWN, null);
+        					return;
+        				}
+        				else continue;
+        				
+        			}
+        			
+        			try {
+        				SipcResponse m = (SipcResponse)parser.parse(is);
+        				if (m == null) {
+        					Log.e(TAG, "got an mal-formated message");
+        				}
+        				else if (m.getResponseCode() == 200 || m.getResponseCode() == 280) {
+	        				Log.d(TAG, "succeeded sending msg: " + m.toString());
+	        				notifyState(State.MSG_TRANSFERED, msg);
+			        		// write the sent message to sms database
+			        		if (msg.contact.mobileNumber != null 
+			        				&& !msg.contact.mobileNumber.equals("")) {
+			        			smsDbWriter.insertSentSms(msg.contact.mobileNumber,
+			        						System.currentTimeMillis(), msg.msg);
+			        		}
+			        		else {
+			        			//notifyState(State.MSG_FAILED, msg);
+			        			Log.e(TAG, "the mobileno of the receiver is invalid");
+			        		}
+        				}
+        				else {
+        					Log.d(TAG, "sending msg failed: errno=" + m.getResponseCode());
+        				}
         			} catch (Exception e) {
         				notifyState(State.MSG_FAILED, msg);
-        				Log.e(TAG, "send online msg command failed");
+        				Log.e(TAG, "send online msg command failed:" + e.getMessage());
+        				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
+        					notifyState(State.NETWORK_DOWN, null);
+        					return;
+        				}
         				continue;
         			}
         		}
         		
         	}
         	else {
-        		Log.e(TAG, "detected pending sms queue size = " + pendingSmsQueue.size());
+        		Log.v(TAG, "detected pending sms queue size = " + pendingSmsQueue.size());
         		if (toBeExited) {
         			Log.e(TAG, "worker thread exits");
         			notifyState(State.THREAD_EXIT, null);
@@ -481,12 +536,42 @@ public class EasyFetionThread extends Thread
         		try {
         			synchronized(this) {
         				notifyState(State.WAIT_MSG, null);
-        				
-        				wait();
+        				wait(300); // simulated timer (but in this thread)
         			}
         		} catch (Exception e) {
         			Log.e(TAG, "work thread fails to wait: " + e.getMessage());
         		}
+        		
+        		// handle reading
+       		 	int c = 0;
+       		 	try {
+       		 		c = is.available();
+       		 	} catch (Exception e) {
+       		 		Log.e(TAG, "error getting input stream available byte count: " + e.getMessage());
+    				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
+    					notifyState(State.NETWORK_DOWN, null);
+    					return;
+    				}
+       		 	}
+    			if (c > 0) {
+    				nomsgcount = 0;
+    				// read
+    				SipcMessage msg = (SipcMessage)parser.parse(is);
+    				Log.d(TAG, "received message ");
+    				Log.d(TAG, msg.toString());
+    			} else {
+    				++nomsgcount;
+    				if (nomsgcount >= 20) {
+    					Log.d(TAG, "no incoming message for 20 times");
+    					nomsgcount  = 0;
+    					/*Log.d(TAG, "force read from input stream");
+    					SipcMessage msg = (SipcMessage)parser.parse(is);
+        				Log.d(TAG, "received message ");
+        				Log.d(TAG, msg.toString());*/
+    				}				
+    			}
+    			
+        		
         	}
         }
 

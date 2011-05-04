@@ -7,10 +7,8 @@ public class FetionMsg implements Comparator<FetionMsg>{
 	public long timestamp;
 	public FetionMsg()
 	{}
-	@Override
+	//@Override
 	public int compare(FetionMsg fm1, FetionMsg fm2){
-		//FetionMsg fm1 = (FetionMsg)m1;
-		//FetionMsg fm2 = (FetionMsg)m2;
 		if (fm1.timestamp > fm2.timestamp)
 			return 1;
 		else if (fm1.timestamp < fm2.timestamp)

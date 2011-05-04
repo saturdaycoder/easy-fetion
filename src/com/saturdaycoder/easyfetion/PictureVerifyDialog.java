@@ -63,7 +63,7 @@ public class PictureVerifyDialog extends Activity
         
         btnAuth.setOnClickListener(new Button.OnClickListener()
         {
-        	@Override
+        	//@Override
         	public void onClick(View v) {
 				Bundle b = new Bundle();
 				b.putString("code", editCode.getText().toString());

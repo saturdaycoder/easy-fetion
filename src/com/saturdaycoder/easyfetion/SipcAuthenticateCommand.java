@@ -25,7 +25,7 @@ public class SipcAuthenticateCommand extends SipcCommand
 	{
 		setCmdLine("R fetion.com.cn SIP-C/4.0");
 		addHeader("F", sc.sId);
-		addHeader("I", "1");
+		addHeader("I", String.valueOf(generateCallId()));
 		addHeader("Q", "2 R");
 		
 		addHeader("A", "Digest response=\"" + response + "\",algorithm=\"SHA1-sess-v4\"");

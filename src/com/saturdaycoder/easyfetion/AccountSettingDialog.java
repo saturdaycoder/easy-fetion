@@ -28,7 +28,7 @@ public class AccountSettingDialog extends Activity
 		bundle = intent.getExtras();
 		
 		btnOk.setOnClickListener(new Button.OnClickListener() {
-			@Override
+			//@Override
 			public void onClick(View v) {
 				Bundle b = new Bundle();
 				b.putString("mobileno", editMobileno.getText().toString());

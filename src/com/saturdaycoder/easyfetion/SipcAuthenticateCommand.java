@@ -76,7 +76,7 @@ public class SipcAuthenticateCommand extends SipcCommand
 			//device.setAttribute("machine-code", Network.macAddr);
 			//root.appendChild(device);
 	        xs.startTag(null, "device");
-	        xs.attribute(null, "machine-code", Network.macAddr);
+	        xs.attribute(null, "machine-code", Network.getWifiMacAddr());
 	        xs.endTag(null, "device");
 			
 			//Element caps = doc.createElement("caps");

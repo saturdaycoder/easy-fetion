@@ -146,94 +146,98 @@ public class EasyFetionThread extends Thread
         
         notifyState(State.CONTACT_GET_SUCC, null);
         
+        Log.v(TAG, "work thread starts");
         fetionDb.getAccount(sysConfig);
         
-
-        
-        Log.d(TAG, "work thread starts");
-        
+        if (sysConfig.sId.equals("")) {
        
-        boolean lretry = false;
-        boolean lreinput = true;
-        do {
-            if ((sysConfig.mobileNumber == null || sysConfig.mobileNumber.equals(""))
-            		&& lreinput) {
-            	notifyState(State.WAIT_LOGIN, null);
-            	try {
-            		synchronized(this) {
-            			wait();
-            		}
-            	} catch (Exception e) {
-            		Log.e(TAG, "error waiting: " + e.getMessage());
-            	}
-            }
-            
-	        LoginSession login = null;
-	        try {
-	        	login = new LoginSession(sysConfig);
-	        	notifyState(State.LOGIN_RUNNING, null);
-	        	Log.d(TAG, "retry login");
-	        	login.send(verification);
-	        	
-	        	login.read();
-	        	
-	        	int statuscode = login.response.getResponseCode();
+	        boolean lretry = false;
+	        boolean lreinput = true;
+	        do {
+	            if ((sysConfig.mobileNumber == null || sysConfig.mobileNumber.equals(""))
+	            		&& lreinput) {
+	            	notifyState(State.WAIT_LOGIN, null);
+	            	try {
+	            		synchronized(this) {
+	            			wait();
+	            		}
+	            	} catch (Exception e) {
+	            		Log.e(TAG, "error waiting: " + e.getMessage());
+	            	}
+	            }
 	            
-	        	Log.d(TAG, "login response = \"" + login.response + "\"");
-	        	
-	            switch(statuscode) {
-	            case 200:
-	            	login.postprocess();
-	            	login.close();
-	            	lreinput = false;
-	            	lretry = false;
-	            	break;
-	            case 420:
-	            case 421:
-	            	login.postprocessVerification(verification);
-	            	notifyState(State.LOGIN_NEED_CONFIRM, null);
-	            	synchronized(this) {
-	                	wait();
-	                }
-	            	Log.d(TAG, "login verify code=" + verification.code);
-	            	
-	            	lretry = true;
-	            	
-	            	lreinput = false;
-	            	login.close();
-	            	break;
-	            	
-	            default:
-	            	notifyState(State.LOGIN_FAIL, null);
-	            	login.close();
-	            	sysConfig.mobileNumber = "";
-	            	lretry = true;
-	            	lreinput = true;
-	            	break;
-	            	
-	            }	
-	        } catch (Exception e) {
-	        	Log.e(TAG, "error in login: " + e.getMessage());
-	        	notifyState(State.LOGIN_FAIL, null);
-	        	if (null != login) 
-	        		login.close();
-	        	
-	        	sysConfig.mobileNumber = "";
-	        	lretry = true;
-	        	break;
-	        }
-	        
-	        
-        } while (lretry);
-        notifyState(State.LOGIN_SUCC, null);
-        fetionDb.setAccount(sysConfig);
+		        LoginSession login = null;
+		        try {
+		        	login = new LoginSession(sysConfig);
+		        	notifyState(State.LOGIN_RUNNING, null);
+		        	Log.d(TAG, "retry login");
+		        	login.send(verification);
+		        	
+		        	login.read();
+		        	
+		        	int statuscode = login.response.getResponseCode();
+		            
+		        	Log.d(TAG, "login response = \"" + login.response + "\"");
+		        	
+		            switch(statuscode) {
+		            case 200:
+		            	login.postprocess();
+		            	login.close();
+		            	lreinput = false;
+		            	lretry = false;
+		            	break;
+		            case 420:
+		            case 421:
+		            	login.postprocessVerification(verification);
+		            	notifyState(State.LOGIN_NEED_CONFIRM, null);
+		            	synchronized(this) {
+		                	wait();
+		                }
+		            	Log.d(TAG, "login verify code=" + verification.code);
+		            	
+		            	lretry = true;
+		            	
+		            	lreinput = false;
+		            	login.close();
+		            	break;
+		            	
+		            default:
+		            	notifyState(State.LOGIN_FAIL, null);
+		            	login.close();
+		            	sysConfig.mobileNumber = "";
+		            	lretry = true;
+		            	lreinput = true;
+		            	break;
+		            	
+		            }	
+		        } catch (Exception e) {
+		        	Log.e(TAG, "error in login: " + e.getMessage());
+		        	notifyState(State.LOGIN_FAIL, null);
+		        	if (null != login) 
+		        		login.close();
+		        	
+		        	sysConfig.mobileNumber = "";
+		        	lretry = true;
+		        	break;
+		        }
+		        
+		        
+	        } while (lretry);
+	        fetionDb.setAccount(sysConfig);
+        }
+	    notifyState(State.LOGIN_SUCC, null);
+        
         
         notifyState(State.WAIT_DOWNLOAD_CONFIG, null);
         notifyState(State.CONFIG_DOWNLOADING, null);
         
         fetionDb.getUserInfo(sysConfig);
-        sysConfig.Download();
-        fetionDb.setUserInfo(sysConfig);
+        
+        if (sysConfig.sipcProxyIp.equals("") || 
+        		sysConfig.sipcProxyPort == -1) {
+        	sysConfig.Download();
+        	fetionDb.setUserInfo(sysConfig);
+        }
         
         notifyState(State.CONFIG_DOWNLOAD_SUCC, null);
         
@@ -310,6 +314,7 @@ public class EasyFetionThread extends Thread
 	            	auth.postprocessContacts(contactList);
 	            	Log.d(TAG, "Process a junk");
 	            	auth.postprocessJunk();
+	            	retry = false;
 	            	break;
 	            case 420:
 	            case 421:
@@ -318,19 +323,22 @@ public class EasyFetionThread extends Thread
 	            	synchronized(this) {
 	                	wait();
 	                }
-	            	if (!verification.code.equals("")) {
-	            		retry = true;
-	            	}
+	            	//if (!verification.code.equals("")) {
+	            		//retry = true;
+	            	retry = true;
+	            	//}
 	            	break;
 	            default:
 	            	notifyState(State.AUTHENTICATE_FAIL, null);
 	            	sipcSocket.close();
+	            	retry = false;
 	            	return;
 	            }
 	        } catch (Exception e) {
 	        	if (null != auth) {
 	        		Log.e(TAG, "error in authenticate session: " + e.getMessage());
 	        		notifyState(State.AUTHENTICATE_FAIL, null);
+	        		retry = false;
 	        		return;
 	        	}
 	        }
@@ -421,7 +429,7 @@ public class EasyFetionThread extends Thread
         	
         	// handle pending sending queue
         	if (pendingSmsQueue.size() > 0) {
-        		Log.e(TAG, "detected pending sms queue size = " + pendingSmsQueue.size());
+        		Log.v(TAG, "detected pending sms queue size = " + pendingSmsQueue.size());
         		FetionMsg msg = pendingSmsQueue.poll();
         		boolean online = true;
         		if (!online) { // send direct SMS
@@ -457,13 +465,12 @@ public class EasyFetionThread extends Thread
         		}
         		else { // send online message
 
-        			try {
-        				//sleep(10000);
+        			/*try {
         				SipcCommand startChatCmd = new SipcStartChatCommand(sysConfig.sId);
         				os.write(startChatCmd.toString().getBytes());
-        				Log.e(TAG, "Sent command: " + startChatCmd.toString());
+        				Log.d(TAG, "Sent command: " + startChatCmd.toString());
         				SipcResponse response = (SipcResponse)parser.parse(is);
-        				Log.e(TAG, "succeeded starting chat: " + response.toString());
+        				Log.d(TAG, "succeeded starting chat: " + response.toString());
         			} catch (Exception e) {
         				Log.e(TAG, "send start chat command failed: "+ e.getMessage());
         				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
@@ -472,8 +479,9 @@ public class EasyFetionThread extends Thread
         					return;
         				}
         				else continue;
-        			}
+        			}*/
         			
+        			// send CatMsg command
         			try {
         				SipcCommand sendMsgCmd = new SipcSendMsgCommand(sysConfig.sId, 
         						msg.contact.sipUri, msg.msg);
@@ -495,7 +503,7 @@ public class EasyFetionThread extends Thread
         				if (m == null) {
         					Log.e(TAG, "got an mal-formated message");
         				}
-        				else if (m.getResponseCode() == 200 || m.getResponseCode() == 280) {
+        				else if (m.getResponseCode() == 200) {
 	        				Log.d(TAG, "succeeded sending msg: " + m.toString());
 	        				notifyState(State.MSG_TRANSFERED, msg);
 			        		// write the sent message to sms database
@@ -515,6 +523,42 @@ public class EasyFetionThread extends Thread
         			} catch (Exception e) {
         				notifyState(State.MSG_FAILED, msg);
         				Log.e(TAG, "send online msg command failed:" + e.getMessage());
+        				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
+        					notifyState(State.NETWORK_DOWN, null);
+        					return;
+        				}
+        				continue;
+        			}
+        			
+        			// send drop command
+        			
+        			try {
+        				SipcCommand dropCmd = new SipcDropCommand(sysConfig.sId);
+        				os.write(dropCmd.toString().getBytes());
+        				Log.d(TAG, "Sent command: " + dropCmd.toString());
+        			} catch (Exception e) {
+        				Log.e(TAG, "sending command failed");
+        				//failedSmsQueue.add(msg);
+        				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
+        					notifyState(State.NETWORK_DOWN, null);
+        					return;
+        				}
+        				else continue;
+        			}
+        			
+        			try {
+        				SipcResponse m = (SipcResponse)parser.parse(is);
+        				if (m == null) {
+        					Log.e(TAG, "got an mal-formated message");
+        				}
+        				else if (m.getResponseCode() == 200) {
+	        				Log.d(TAG, "succeeded droping");
+        				}
+        				else {
+        					Log.d(TAG, "drop failed: errno=" + m.getResponseCode());
+        				}
+        			} catch (Exception e) {
+        				Log.e(TAG, "drop failed because of error:" + e.getMessage());
         				if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
         					notifyState(State.NETWORK_DOWN, null);
         					return;
@@ -562,7 +606,7 @@ public class EasyFetionThread extends Thread
     			} else {
     				++nomsgcount;
     				if (nomsgcount >= 20) {
-    					Log.d(TAG, "no incoming message for 20 times");
+    					Log.v(TAG, "no incoming message for 20 times");
     					nomsgcount  = 0;
     					/*Log.d(TAG, "force read from input stream");
     					SipcMessage msg = (SipcMessage)parser.parse(is);

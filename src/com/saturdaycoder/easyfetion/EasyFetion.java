@@ -88,54 +88,16 @@ public class EasyFetion extends Activity
         //spinContacts = (Spinner)findViewById(R.id.spinContacts);
         lvContacts = (ListView)findViewById(R.id.lvContacts);
         textSelContact = (TextView)findViewById(R.id.textSelContact);
+
+        Network.setActivity(this);
         
-        
-        
-        
-        
-        
-        
-        Log.d(TAG, "prepare to get wifi manager");
-        
-        try {
-        	WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            if (wifi == null) {
-            	Log.e(TAG, "no wifi manager");
-            	return;
-            }
-            
-            WifiInfo info = wifi.getConnectionInfo();
-            if (info == null) {
-            	showerr(TAG, "no wifi info");
-            }
-            Network.macAddr = info.getMacAddress().replace(":", "");
-            Log.d(TAG, "wifi mac = " + Network.macAddr);
-        } catch (Exception e) {
-        	Log.d(TAG, "calling getSystemService failed with: " + e.getMessage());
+        if (!Network.isNetworkAvailable()) {
+        	showerr(TAG, "Network is not available");
+        	//return;
+        	finish();
+        	return;
         }
-        
-        
-		/*spinContacts.setOnItemSelectedListener(new OnItemSelectedListener(){
-			@Override 
-			public void onItemSelected(AdapterView<?> arg0, View arg1,
-					int arg2, long arg3) {
-				// TODO Auto-generated method stub
-				//Toast.makeText(main.this, Value[arg2],10).show();
-				showerr(TAG, "selected contact " + worker.contactList.get(arg2).nickName);
-				selectedContacts.clear();
-				selectedContacts.add(worker.contactList.get(arg2));
-			}
-			
- 
-			@Override
-			public void onNothingSelected(AdapterView<?> arg0) {
-				// TODO Auto-generated method stub
-				//Toast.makeText(main.this, "没选中",10).show();
-				showerr(TAG, "no contact selected");
-				selectedContacts.clear();
-			}
- 
-		});*/
+
         lvContacts.setOnItemClickListener(new OnItemClickListener() {
         	//@Override
         	public void onItemClick(AdapterView<?> a, View v, int position, long id) 
@@ -435,10 +397,16 @@ public class EasyFetion extends Activity
     }
     @Override 
     public void onConfigurationChanged(Configuration newConfig) {
-    	Log.i(TAG, "QUICKFETION ONCONFIGURATIONCHANGED");
+    	Log.i(TAG, "QUICKFETION ONCONFIGURATIONCHANGED: " + newConfig.toString());
     	super.onConfigurationChanged(newConfig); 
 
-    } 
+    }
+    
+    //@Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+    {
+    	Log.d(TAG, "onMeasure(" + widthMeasureSpec + "," + heightMeasureSpec + ")");
+    }
 }
         
     

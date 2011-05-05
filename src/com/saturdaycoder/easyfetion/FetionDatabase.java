@@ -249,13 +249,13 @@ public class FetionDatabase extends SQLiteOpenHelper
 	
 	public void getAccount(SystemConfig sysConfig)
 	{
-		Log.d(TAG, "FetionDatabase getAccount");
+		Log.v(TAG, "FetionDatabase getAccount");
 		SQLiteDatabase db = this.getWritableDatabase();
 
 		Cursor cursor = db.rawQuery("select * from user", null);
 		String plainPasswd = "";
 
-		Log.d(TAG, "cursor queried");
+		Log.v(TAG, "cursor queried");
 		if (cursor.moveToFirst()) 
 		{
 			if (encryptUserPasswd) {
@@ -264,21 +264,22 @@ public class FetionDatabase extends SQLiteOpenHelper
 				plainPasswd = cursor.getString(1);
 			}
 			
-			Log.d(TAG, "found existing account: ");
+			Log.v(TAG, "found existing account: ");
 			
 			//plainPasswd = plainPasswd.substring(plainPasswd.indexOf("Fuck Fetion:") + 12);
+			sysConfig.sId = cursor.getString(0);
 			sysConfig.userPassword = plainPasswd;
-
+			sysConfig.userId = cursor.getString(2);
 			sysConfig.mobileNumber = cursor.getString(3);
-			Log.d(TAG, "passwd=" + sysConfig.userPassword
+			Log.v(TAG, "passwd=" + sysConfig.userPassword
 					+ " mobileno=" + sysConfig.mobileNumber);
 		}
 		else 
 		{
 			Log.d(TAG, "found no matching account");
-
+			sysConfig.sId = "";
 			sysConfig.userPassword = "";
-
+			sysConfig.userId = "";
 			sysConfig.mobileNumber = "";
 		}
 	}

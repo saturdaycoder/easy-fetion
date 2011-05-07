@@ -137,13 +137,8 @@ public class MsgHistory extends Activity
     
     @Override
     protected void onResume() {
-    	IntentFilter filter = new IntentFilter();
-    	filter.addAction("android.provider.Telephony.SMS_RECEIVED");
-    	filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
-    	registerReceiver(receiver, filter);
-    	//Intent intent = new Intent();
-    	//intent.setAction("com.android.xiang");
-    	//sendBroadcast(intent);
+
+    	
     	loadMsgList();
     	super.onResume();
     	
@@ -151,16 +146,28 @@ public class MsgHistory extends Activity
     
     @Override
     protected void onPause() {
-    	unregisterReceiver(receiver);
+
     	super.onPause();
     }
 	
-	
+	@Override
+	protected void onStop() {
+    	unregisterReceiver(receiver);
+    	Log.d(TAG, "RECEIVER UNREGISTERED");
+    	super.onStop();
+	}
 	@Override
 	protected void onStart() {
 		super.onStart();
 		crypto = Crypto.getInstance();
 		Log.d(TAG, "loading sms list of " + mobileno);
+		
+    	IntentFilter filter = new IntentFilter();
+    	filter.addAction("android.provider.Telephony.SMS_RECEIVED");
+    	filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
+    	registerReceiver(receiver, filter);
+    	Log.d(TAG, "RECEIVER REGISTERED");
+		
 		
 		loadMsgList();
 		uiHandler = new SendMsgUiHandler();
@@ -168,6 +175,8 @@ public class MsgHistory extends Activity
 		//Log.d(TAG, "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
 		thread = new SendMsgThread(sysConfig, crypto, uiHandler);
 		thread.start();
+		
+		
 	}
 	
 	@Override

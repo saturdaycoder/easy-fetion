@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class SmsDbAdapter
 {
 	private static ContentResolver cr = null;
+	private static final String TAG = "EasyFetion";
 	//private Cursor cursor;
 	
 	/*private static final int _id_index = 0;
@@ -55,6 +56,7 @@ public class SmsDbAdapter
 		String sortOrder = "date asc";
 		Cursor cursor = cr.query(Uri.parse("content://sms"), 
 				projection, selection, selectionArgs, sortOrder);
+		
 		if (cursor.moveToFirst()) {
 			while (!cursor.isAfterLast()) {
 				AndroidSms sms = new AndroidSms();
@@ -73,11 +75,11 @@ public class SmsDbAdapter
 	
 	public static void insertSentSms(String recvno, long millis, String msg)
 	{
-		//Log.d(TAG, "write sms into " + recvno);
+		
 		ContentValues values = new ContentValues();
 		values.put("address", recvno);
 		values.put("date", millis);
-		values.put("server_date", millis);
+		//values.put("server_date", millis);
 		values.put("read", 1);
 		values.put("status", 0);
 		values.put("locked", 0);
@@ -85,23 +87,34 @@ public class SmsDbAdapter
 		values.put("type", 2);
 		values.put("seen", 1);
 		values.put("body", msg);
-		cr.insert(Uri.parse("content://sms/sent"), values);
+		
+		//Uri allsms = Uri.parse("content://sms");
+		Uri sent = Uri.parse("content://sms/sent");
+		//Log.d(TAG, "allsms=" + allsms.toString() + ",sent="+sent.toString());
+		
+		Uri inserted = cr.insert(sent, values);
+		Log.d(TAG, "write sms into " + recvno + ": " + inserted.toString());
 	}
 	public static void insertReceivedSms(String fromno, long millis, String msg)
 	{
-		//Log.d(TAG, "write sms into " + recvno);
+		
 		ContentValues values = new ContentValues();
 		values.put("address", fromno);
 		values.put("date", millis);
-		values.put("server_date", millis);
+		//values.put("server_date", millis);
 		values.put("read", 1);
-		values.put("status", 0);
+		values.put("status", -1);
 		values.put("locked", 0);
 		values.put("error_code", 0);
 		values.put("type", 1);
 		values.put("seen", 1);
 		values.put("body", msg);
-		cr.insert(Uri.parse("content://sms/inbox"), values);
+		//Uri allsms = Uri.parse("content://sms");
+		Uri inbox = Uri.parse("content://sms/inbox");
+		//Log.d(TAG, "allsms=" + allsms.toString() + ",inbox="+inbox.toString());
+		
+		Uri inserted = cr.insert(inbox, values);
+		Log.d(TAG, "write sms into " + fromno + ": " + inserted.toString());
 	}
 	
 }

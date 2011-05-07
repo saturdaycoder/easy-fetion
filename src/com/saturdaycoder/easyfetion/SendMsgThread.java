@@ -220,55 +220,57 @@ public class SendMsgThread extends Thread{
     				return;
     			}
     			
+    			SipcResponse m = null;
+    			
     			try {
-    				SipcResponse m = (SipcResponse)parser.parse(is);
-    				if (m == null) {
-    					Log.e(TAG, "got an mal-formated message");
-    				}
-    				else if (m.getResponseCode() == 200) {
-    					Log.d(TAG, "succeeded sending msg: " + m.toString());
-        				
-    					long date = System.currentTimeMillis();
-    					String strd = m.getHeaderValue("D");
-    					if (strd != null) {
-    						date = Date.parse(strd);
-    						Log.d(TAG, "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
-    					}
-    					
-    					
-		        		// write the sent message to sms database
-		        		SmsDbAdapter.insertSentSms(fm.contact.getSmsNumber(),
-		        						date, fm.msg);
-		        		notifyState(State.MSG_TRANSFERED, fm);
-		        		
-    				}
-    				else if (m.getResponseCode() == 280) {
-    					Log.d(TAG, "succeeded sending msg by SMS: " + m.toString());
-    					long date = System.currentTimeMillis();
-    					String strd = m.getHeaderValue("D");
-    					if (strd != null) {
-    						date = Date.parse(strd);
-    						Log.d(TAG, "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
-    					}
-		        		// write the sent message to sms database
-		        		SmsDbAdapter.insertSentSms(fm.contact.getSmsNumber(),
-		        						date, fm.msg);
-		        		notifyState(State.MSG_TRANSFERED_SMS, fm);
-		        		
-    				}
-    				else {
-    					notifyState(State.MSG_FAILED, fm);
-    					Log.d(TAG, "sending msg failed: errno=" + m.getResponseCode());
-    					
-    				}
-    			} catch (Exception e) {
-    				//notifyState(State.MSG_FAILED, msg);
+    				m = (SipcResponse)parser.parse(is);
+    			}catch (Exception e) {
+    				
     				Log.e(TAG, "send online msg command failed:" + e.getMessage());
-    				//if (sipcSocket.isInputShutdown() || sipcSocket.isOutputShutdown()) {
+    				
     				notifyState(State.NETWORK_ERROR, fm);
-    				//}
+    				
     			}
-    	        
+				if (m == null) {
+					Log.e(TAG, "got an mal-formated message");
+				}
+				else if (m.getResponseCode() == 200) {
+					Log.d(TAG, "succeeded sending msg: " + m.toString());
+    				
+					long date = System.currentTimeMillis();
+					String strd = m.getHeaderValue("D");
+					if (strd != null) {
+						date = Date.parse(strd);
+						Log.d(TAG, "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
+					}
+					
+					
+	        		// write the sent message to sms database
+	        		SmsDbAdapter.insertSentSms(fm.contact.getSmsNumber(),
+	        						date, fm.msg);
+	        		notifyState(State.MSG_TRANSFERED, fm);
+	        		
+				}
+				else if (m.getResponseCode() == 280) {
+					Log.d(TAG, "succeeded sending msg by SMS: " + m.toString());
+					long date = System.currentTimeMillis();
+					String strd = m.getHeaderValue("D");
+					if (strd != null) {
+						date = Date.parse(strd);
+						Log.d(TAG, "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
+					}
+	        		// write the sent message to sms database
+	        		SmsDbAdapter.insertSentSms(fm.contact.getSmsNumber(),
+	        						date, fm.msg);
+	        		notifyState(State.MSG_TRANSFERED_SMS, fm);
+	        		
+				}
+				else {
+					notifyState(State.MSG_FAILED, fm);
+					Log.d(TAG, "sending msg failed: errno=" + m.getResponseCode());
+					
+				}
+   	        
     			
     			// send drop
     	        boolean dretry = false;

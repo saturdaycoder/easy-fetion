@@ -14,8 +14,27 @@ public class FetionDatabase extends SQLiteOpenHelper
 	private static final String DATABASE_NAME = "userdb";
 	private static final int DB_VERSION = 1;
 	private static final boolean encryptUserPasswd = true;
-	public FetionDatabase(Context context) {
+	protected FetionDatabase(Context context) {
 		super(context, DATABASE_NAME, null, DB_VERSION);
+	}
+	
+	protected static FetionDatabase instance = null;
+	public static void setInstance(Context context) 
+	{
+		if (instance == null) {
+			synchronized(FetionDatabase.class) {
+				if (instance == null) {
+					instance = new FetionDatabase(context);
+					 
+				}
+			}
+		}
+	}
+	public static FetionDatabase getInstance()
+	{
+		if (instance == null)
+			throw new NullPointerException();
+		return instance;
 	}
 
 	@Override
@@ -167,6 +186,12 @@ public class FetionDatabase extends SQLiteOpenHelper
 			return c;
 		}
 		else return null;
+	}
+	
+	public void clearContacts()
+	{
+		SQLiteDatabase db = this.getWritableDatabase();
+		db.execSQL("delete from contacts");
 	}
 	
 	public FetionContact[] getContacts()

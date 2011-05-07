@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<ListView 
+    android:layout_height="350px" 
+    android:id="@+id/lvMsgList" 
+    android:layout_width="260px"
+    android:choiceMode="none" android:clickable="false"
+    android:stackFromBottom="true"
+    android:transcriptMode="alwaysScroll"/>
+<EditText 
+    android:id="@+id/editMsgText" 
+    android:text=""
+    android:layout_height="50px" 
+    android:layout_width="100px" 
+    android:layout_below="@+id/lvMsgList"
+    />
+<Button 
+    android:text="@string/button_send_text" 
+    android:id="@+id/btnSendMsg" 
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent"
+    android:layout_toRightOf="@+id/editMsgText"
+    android:layout_below="@+id/lvMsgList"
+    />    
+</RelativeLayout>

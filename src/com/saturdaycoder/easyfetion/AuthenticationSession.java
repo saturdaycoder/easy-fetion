@@ -40,6 +40,7 @@ public class AuthenticationSession {
 		char rsa[] = crypto.computeResponse(sysConfig.userId, sysConfig.userPassword);
 		SipcCommand authMsg = new SipcAuthenticateCommand(sysConfig, 
 				new String(rsa), pv);
+		Log.d(TAG, "sent: " + authMsg.toString());
 		os.write(authMsg.toString().getBytes());
 	}
 	
@@ -58,9 +59,7 @@ public class AuthenticationSession {
 	
 	public void postprocessContacts(Map<String, FetionContact> ca)
 	{
-		//ArrayList<FetionContact> tmp = new ArrayList<FetionContact>();
-		//ca.clear();
-		//ArrayList<FetionContact> ca = new ArrayList<FetionContact>();
+
     	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance(); 
 		try {
 			DocumentBuilder db = dbf.newDocumentBuilder(); //ParserConfigurationException
@@ -113,9 +112,10 @@ public class AuthenticationSession {
 										c.relationStatus = Integer.parseInt(b.getAttributes().getNamedItem("r").getNodeValue());
 										c.identity = b.getAttributes().getNamedItem("p").getNodeValue();
 										
-										//tmp.add(c);
-										if (!ca.containsKey(c.sipUri))
+										
+										if (ca != null && !ca.containsKey(c.sipUri)) {
 											ca.put(c.sipUri, c);
+										}
 										
 										Log.d(TAG, "added contact:" + c.sipUri
 												+ "," + c.userId 
@@ -138,7 +138,9 @@ public class AuthenticationSession {
 			Log.e(TAG, "error parsing xml " + e.getMessage());
 			//return null;
 			//throw new IOException("error parsing contacts");
-			ca.clear();
+			if (ca != null) {
+				ca.clear();
+			}
 		}	
 		
 	}

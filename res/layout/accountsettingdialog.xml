@@ -4,19 +4,24 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
+<TextView 
+    android:text="@string/reason_first_login_instruction" 
+    android:layout_width="200px" 
+    android:layout_height="wrap_content"
+    />
 <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="您的手机号或邮箱地址"
+    android:text="@string/text_user_mobileno"
     />
 <EditText 
     android:id="@+id/editAcc" 
     android:text=""
     android:layout_height="50px" 
-    android:layout_width="200px" android:inputType="number"/>
+    android:layout_width="200px" 
+    android:inputType="number"/>
 <TextView 
-    android:text="您的飞信密码" 
-    android:id="@+id/textView1" 
+    android:text="@string/text_user_password" 
     android:layout_width="wrap_content" 
     android:layout_height="wrap_content"
     />
@@ -24,10 +29,17 @@
     android:id="@+id/editAccPasswd" 
     android:text=""
     android:layout_height="50px" 
-    android:layout_width="200px" android:inputType="textPassword"/>
+    android:layout_width="200px" 
+    android:inputType="textPassword"/>
 <Button 
-    android:text="确认" 
+    android:text="@string/button_login_text" 
     android:id="@+id/btnConfirmAccountSetting" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content"
+    />
+<Button 
+    android:text="@string/button_cancel_text" 
+    android:id="@+id/btnCancelAccountSetting" 
     android:layout_width="wrap_content" 
     android:layout_height="wrap_content"
     />

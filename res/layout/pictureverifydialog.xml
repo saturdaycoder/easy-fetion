@@ -17,7 +17,7 @@
     android:text=""
     />
 <Button 
-    android:text="验证" 
+    android:text="@string/button_authenticate_text" 
     android:id="@+id/buttonAuth" 
     android:layout_width="wrap_content" 
     android:layout_height="wrap_content"

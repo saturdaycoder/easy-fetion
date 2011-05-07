@@ -28,6 +28,37 @@ public class FetionContact {
 	public int dirty = -1;
 	public String version = "";
 	
+	public String getFetionNumber() {
+		int sipbegin = sipUri.indexOf("sip:");
+		if (sipbegin == -1) {
+			return "";
+		}
+		
+		int sipend = sipUri.indexOf('@');
+		return sipUri.substring(sipbegin + 4, sipend);
+	}
 	
+	public String getDisplayName() {
+		if (localName.equals("")) {
+			if (nickName.equals("")) {
+				return "No name";
+			}
+			else {
+				return nickName;
+			}
+		}
+		else {
+			return localName;
+		}
+	}
+	
+	public String getSmsNumber() {
+		if (mobileNumber.equals("")) {
+			return "12520" + getFetionNumber();
+		}
+		else { 
+			return "12520" + mobileNumber;
+		}
+	}
 	
 }

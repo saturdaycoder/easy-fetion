@@ -4,7 +4,9 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import java.net.*;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 
@@ -31,12 +33,16 @@ import java.io.IOException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.util.HashMap;
-
+import android.view.MenuItem;
+import android.view.Menu;
 import com.saturdaycoder.easyfetion.EasyFetionThread.State;
+//import com.saturdaycoder.easyfetion.LoginThread.ThreadState;
 
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -50,13 +56,35 @@ public class EasyFetion extends Activity
 	
 	private Button btnSend;
 	private EditText editMsg;
-	//private Spinner spinContacts;
-	private ListView lvSelContact;
-	private ListView lvContacts;
-    private TextView textSelContact;
-    private Handler uiHandler;
 
-    final EasyFetionThread worker = new EasyFetionThread();;
+	private static final int MENU_SET_ACC_ID = Menu.FIRST;  
+	private static final int MENU_REFRESH_ID = Menu.FIRST + 1;  
+	private static final int MENU_ABOUT_ID = Menu.FIRST + 2;  
+	
+	private static final int DIALOG_LOGIN_PROGRESS = 0;
+	private static final int DIALOG_REFRESH_PROGRESS = 1;
+	
+	private static final int INTENT_ACC_SET_DIALOG = 0;
+	private static final int INTENT_PIC_VERIFY_DIALOG = 1;
+	private static final int INTENT_MSG_HISTORY = 2;
+	
+	private ListView lvContacts;
+	private SystemConfig sysConfig;
+    private Handler loginUiHandler;
+    private Handler refreshUiHandler;
+    private Crypto crypto;
+    private Map<String, FetionContact> contactList;
+    
+    
+    
+    //private FetionPictureVerification verification;
+    
+    private LoginThread loginThread;
+    private RefreshThread refreshThread;
+    
+    private boolean pendingLogin = false;
+
+    //final EasyFetionThread worker = new EasyFetionThread();;
     
     private ArrayList<FetionContact> selectedContacts = new ArrayList<FetionContact>();
     
@@ -69,12 +97,107 @@ public class EasyFetion extends Activity
     private void popNotify(String msg)
     {
         Toast.makeText(EasyFetion.this, msg,
-                Toast.LENGTH_SHORT).show();
+                Toast.LENGTH_LONG).show();
     }
     private void statusbarNotify(String msg)
     {
     	
     }
+
+    private class RefreshUiHandler extends Handler {
+        
+    	@Override
+        public void handleMessage(Message msg) 
+		{
+    		RefreshThread.State state = (RefreshThread.State)msg.obj;
+    		Log.v(TAG, "received reports of state: " + state.toString());
+    		switch (state) {
+			case AUTHENTICATE_NEED_CONFIRM: {					
+				Intent intent = new Intent();
+				intent.setClass(EasyFetion.this, PictureVerifyDialog.class);
+				Bundle bundle = new Bundle();
+				bundle.putByteArray("picture", refreshThread.verification.getPicture());
+				intent.putExtras(bundle);
+				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG);
+				
+				break;
+			}
+			case CONTACT_GET_SUCC:
+				dismissDialog(DIALOG_REFRESH_PROGRESS);
+				FetionDatabase.getInstance().setUserInfo(sysConfig);
+				
+				loadContactList();
+				
+				
+				Iterator<String> iter = contactList.keySet().iterator();
+        		while (iter.hasNext()) {
+        			String uri = iter.next();
+        			FetionContact c = contactList.get(uri);
+        			FetionDatabase.getInstance().setContact(c);
+        		}
+				
+				showerr(TAG, "Congratulations! contact list ok!!");
+				break;
+			case AUTHENTICATE_FAIL:
+				dismissDialog(DIALOG_REFRESH_PROGRESS);
+				showerr(TAG, "authenticate failed. try again");
+				break;
+			default:
+				break;
+			}
+		}
+	}
+    
+    private class LoginUiHandler extends Handler {
+    	@Override
+        public void handleMessage(Message msg) 
+		{
+    		LoginThread.State state = (LoginThread.State)msg.obj;
+			
+			Log.v(TAG, "received reports of state: " + state.toString());
+			
+			switch (state) {
+			case LOGIN_NEED_CONFIRM: {			
+				Intent intent = new Intent();
+				intent.setClass(EasyFetion.this, PictureVerifyDialog.class);
+				Bundle bundle = new Bundle();
+				bundle.putByteArray("picture", loginThread.verification.getPicture());
+				intent.putExtras(bundle);
+				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG);
+				
+				break;
+			}
+			case LOGIN_FAIL: 
+				dismissDialog(INTENT_ACC_SET_DIALOG);
+				showerr(TAG, "Login failed. input your account again");
+				break;
+			case LOGIN_SUCC: 
+				FetionDatabase.getInstance().setAccount(sysConfig);
+				FetionDatabase.getInstance().clearContacts();
+				break;	
+			case CONFIG_DOWNLOADING:
+				break;
+			case CONFIG_DOWNLOAD_SUCC:
+				dismissDialog(INTENT_ACC_SET_DIALOG);
+				FetionDatabase.getInstance().setUserInfo(sysConfig);
+				
+    			
+				showerr(TAG, "Congratulations! Your ass is mine!!");
+				
+				showDialog(DIALOG_REFRESH_PROGRESS);
+	    		
+				refreshThread = new RefreshThread(sysConfig, crypto,
+						contactList, refreshUiHandler);
+				refreshThread.start();
+				
+				break;
+			case CONFIG_DOWNLOAD_FAIL:
+				break;
+			}
+			
+		}
+    }
+    
     
     /** Called when the activity is first created. */
     @Override
@@ -83,27 +206,38 @@ public class EasyFetion extends Activity
     	Log.d(TAG, "QUICKFETION ONCREATE");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        btnSend = (Button)findViewById(R.id.buttonSend);
-        editMsg = (EditText)findViewById(R.id.editMessage);
+        //btnSend = (Button)findViewById(R.id.buttonSend);
+        //editMsg = (EditText)findViewById(R.id.editMessage);
         //spinContacts = (Spinner)findViewById(R.id.spinContacts);
         lvContacts = (ListView)findViewById(R.id.lvContacts);
-        textSelContact = (TextView)findViewById(R.id.textSelContact);
+        
 
         Network.setActivity(this);
         
         if (!Network.isNetworkAvailable()) {
-        	showerr(TAG, "Network is not available");
-        	//return;
+        	showerr(TAG, "Give me your WIFI/3G's ass. Or I get nothing to fuck");
+
         	finish();
         	return;
         }
+        
+        FetionDatabase.setInstance(this);
+        SmsDbAdapter.setContext(this);
+        
+        //sysConfig = new SystemConfig();
+        sysConfig = SystemConfig.getInstance();
+        refreshUiHandler = new RefreshUiHandler();
+        loginUiHandler = new LoginUiHandler();
+        contactList = new LinkedHashMap<String, FetionContact>();
+        crypto = Crypto.getInstance();
 
         lvContacts.setOnItemClickListener(new OnItemClickListener() {
-        	//@Override
+        	@Override
         	public void onItemClick(AdapterView<?> a, View v, int position, long id) 
         	{
-        		selectedContacts.clear();
-        		Iterator<String> iter = worker.contactList.keySet().iterator();
+        		Log.d(TAG, "lvcontacts onitemclick");
+        		//selectedContacts.clear();
+        		Iterator<String> iter = contactList.keySet().iterator();
         		int i = -1;
         		String uri = "";
         		while (i != position && iter.hasNext()) {
@@ -114,230 +248,73 @@ public class EasyFetion extends Activity
         			showerr(TAG, "FATAL error selecting contact");
         			return;
         		}
-        		selectedContacts.add(worker.contactList.get(uri));
-        		showerr(TAG, "selected contact " + worker.contactList.get(uri).nickName);
-        		EasyFetion.this.textSelContact.setText("选定联系人为：" + worker.contactList.get(uri).nickName);
+        		
+        		Intent intent = new Intent();
+    			intent.setClass(EasyFetion.this, MsgHistory.class);
+    			Bundle bundle = new Bundle();
+    			bundle.putString("mobileno", contactList.get(uri).getSmsNumber());
+    			bundle.putString("nickname", contactList.get(uri).getDisplayName());
+    			bundle.putString("sipuri", contactList.get(uri).sipUri);
+    			intent.putExtras(bundle);
+    			startActivity(intent);
+        		
+        		//selectedContacts.add(worker.contactList.get(uri));
+        		//showerr(TAG, "selected contact " + worker.contactList.get(uri).nickName);
+        		//}
         	}
         });
-        
-        //uiHandler);
-        uiHandler = new Handler() 
-        {
-			@Override
-            public void handleMessage(Message msg) 
-			{
-				EasyFetionThread.ThreadState ts = (EasyFetionThread.ThreadState)msg.obj;
-				EasyFetionThread.State state = ts.state;
-				FetionMsg fm = (FetionMsg)ts.arg;
-				Log.v(TAG, "work thread reports " + state.toString());
-				
-				Intent intent;
-				Bundle bundle;
-				
-				try {
-					switch (state) 
-					{
-					case THREAD_EXIT:
-						EasyFetion.this.finish();
-						break;
-					case WAIT_LOGIN: // popup dialog for input acc/pw
-						intent = new Intent();
-						intent.setClass(EasyFetion.this, AccountSettingDialog.class);
-						bundle = new Bundle();
-						intent.putExtras(bundle);
-						startActivityForResult(intent, 0);
 
-						break;
-					case LOGIN_NEED_CONFIRM:
-					case AUTHENTICATE_NEED_CONFIRM:
-						intent = new Intent();
-						intent.setClass(EasyFetion.this, PictureVerifyDialog.class);
-						bundle = new Bundle();
-						bundle.putByteArray("picture", worker.verification.getPicture());
-						intent.putExtras(bundle);
-						startActivityForResult(intent, 1);
-						//showerr(TAG, "login needs picture verification which is not supported now, sorry");
-						break;
-					case LOGIN_FAIL: // input acc/pw again
-						break;
-					case LOGIN_SUCC: // save acc/pw into db
-						break;
-					case MSG_TRANSFERED:
-						showerr(TAG, "message to " + fm.contact.nickName + " was successfully transfered");
-						break;
-					case MSG_FAILED:
-						showerr(TAG, "message to " + fm.contact.nickName + " was failed");
-						break;
-					
-
-					case CONTACT_GET_SUCC:
-						/*ArrayList<String> strlist = new ArrayList<String>();
-						for (int i = 0; i < worker.contactList.size(); ++i) {
-							String nn = worker.contactList.get(i).nickName;
-							if (nn == null || nn.equals("")) {
-								nn = new String("无昵称");
-							} 
-							String mn = worker.contactList.get(i).mobileNumber;
-							if (mn == null || mn.equals("")) {
-								mn = new String("无手机号码");
-							}
-							
-							strlist.add(nn + "(" + mn + ")");
-						}
-						FetionContact contacts[] = new FetionContact[worker.contactList.size()];
-						contacts = worker.contactList.toArray(contacts);
-						String strs[] = new String[strlist.size()];
-						strs = strlist.toArray(strs);
-						Log.d(TAG, "create adapter");
-						ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-				                EasyFetion.this, 
-				                android.R.layout.simple_spinner_item,
-				                strs);
-				        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-				        spinContacts.setAdapter(adapter);
-						Log.d(TAG, "spinContacts set " + strlist.size() + " items");
-*/
-						
-						// set list view
-						ArrayList<HashMap<String, Object>> listItem 
-								= new ArrayList<HashMap<String, Object>>(); 
-				        //for(int i=0;i<worker.contactList.size();i++)
-						Iterator<String> iter = worker.contactList.keySet().iterator();
-						while(iter.hasNext())
-				        { 
-							String uri = iter.next();
-							String nn = worker.contactList.get(uri).nickName;
-							if (nn == null || nn.equals("")) {
-								nn = worker.contactList.get(uri).localName;
-								if (nn == null || nn.equals("")) {	
-									nn = new String("无昵称");
-								}
-							} 
-							String mn = worker.contactList.get(uri).mobileNumber;
-							if (mn == null || mn.equals("")) {
-								mn = new String("无手机号码");
-							}
-							
-							
-				            HashMap<String, Object> map = new HashMap<String, Object>(); 
-				            map.put("FetionImage", R.drawable.icon); 
-				            map.put("FetionNickName", nn); 
-				            map.put("FetionMobileNo", mn); 
-				            listItem.add(map); 
-				        } 
-				        //生成适配器的Item和动态数组对应的元素 
-				        SimpleAdapter listItemAdapter = new SimpleAdapter(EasyFetion.this,
-				        	listItem,//数据源  
-				            R.layout.listview,//ListItem的XML实现 
-				            //动态数组与ImageItem对应的子项         
-				            new String[] {"FetionImage",
-				        		"FetionNickName", 
-				        		"FetionMobileNo"},  
-				            //ImageItem的XML文件里面的一个ImageView,两个TextView ID 
-				            new int[] {R.id.FetionImage,
-				        		R.id.FetionNickName,
-				        		R.id.FetionMobileNo} 
-				        ); 
-				        
-				        //添加并且显示 
-				        lvContacts.setAdapter(listItemAdapter);  
-						break;
-					default:
-						break;
-					}
-				} catch (Exception e) {
-					Log.e(TAG, "error filling contact list: " + e.getMessage());
-				}
-			}
-        };
-        
-        
-        
-        btnSend.setOnClickListener(new Button.OnClickListener()
-        {
-        	//@Override
-        	public void onClick(View v) {
-        		
-        		String text = editMsg.getText().toString();
-        		if (text.equals(""))
-        			return;
-        		
-        		if (selectedContacts.size() == 0)
-        			return;
-        		
-        		for (int i = 0; i < selectedContacts.size(); ++i) {
-        			FetionMsg msg = new FetionMsg();
-        			msg.contact = selectedContacts.get(i);
-        			msg.msg = text;
-        			msg.timestamp = System.currentTimeMillis();
-        			worker.pendingSmsQueue.add(msg);
-        			Log.d(TAG, "added new sms to pending queue");
-        		}
-        		
-        		if (worker.state == State.WAIT_MSG) {
-        			
-        			synchronized(worker) 
-    				{
-        				Log.d(TAG, "awake work thread");
-    					// set verification code
-    					worker.notify();
-    				}
-    		        	
-        		
-        		} 
-        		
-				
-        	}
-        });
-        
-        worker.init(uiHandler);
-        worker.smsDbWriter = new SmsDbWriter(this);
-        worker.fetionDb = new FetionDatabase(this);
-        worker.start();
     }
     
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
     	switch (requestCode) {
-    	case 0: // from AccountSettingDialog
-    		if (worker.state == State.WAIT_LOGIN) {
-    			switch (resultCode) {
-    			case RESULT_OK:
-		    		Bundle bundle = data.getExtras();
-		    		worker.sysConfig.mobileNumber = bundle.getString("mobileno");
-		    		worker.sysConfig.userPassword = bundle.getString("passwd");
-		    		Log.d(TAG, "input user passwd is " + worker.sysConfig.userPassword);
-		    		synchronized(worker) {
-		    			worker.notify();
-		    		}
-		    		break;
-		    	default:
-		    		Log.e(TAG, "setting dialog destroyed");
-		    		worker.stop();
-		    		break;
-    			}
+    	case INTENT_ACC_SET_DIALOG: {
+    		if (resultCode == RESULT_OK) {
+	    		Bundle bundle = data.getExtras();
+	    		if (!bundle.containsKey("mobileno")) {
+	    			Log.e(TAG, "not contain mobileno");
+	    		}
+	    		sysConfig.mobileNumber = bundle.getString("mobileno");
+	    		sysConfig.userPassword = bundle.getString("passwd");
+	    		if (sysConfig.mobileNumber == null || sysConfig.userPassword == null) {
+	    			Log.e(TAG, "retrieving user account:" + 
+	    					sysConfig.mobileNumber + ", " + sysConfig.userPassword);
+	    		}
+	
+	    		showDialog(DIALOG_LOGIN_PROGRESS);
+	    		
+				loginThread = new LoginThread(sysConfig, loginUiHandler);
+				loginThread.start();
+	    		
+	    		Log.v(TAG, "Dialog created and returned");
+    		}
+    		else {
+    			Log.d(TAG, "dialog canceled");
     		}
     		break;
-    	case 1: // from PictureVerifyDialog
-    		if (worker.state == State.LOGIN_NEED_CONFIRM
-    				|| worker.state == State.AUTHENTICATE_NEED_CONFIRM)
+    	}
+    	case INTENT_PIC_VERIFY_DIALOG: {
+    		if (loginThread.state == LoginThread.State.LOGIN_NEED_CONFIRM)
     		{
     			switch (resultCode) {
-    			case RESULT_OK:
+    			case RESULT_OK: {
 		    		Bundle bundle = data.getExtras();
-		    		worker.verification.code = bundle.getString("code"); 
-		    		synchronized(worker) {
-		    			worker.notify();
+		    		loginThread.verification.code = bundle.getString("code"); 
+		    		synchronized(loginThread) {
+		    			loginThread.notify();
 		    		}
 		    		break;
+    			}
 		    	default:
 		    		Log.e(TAG, "pic verify destroyed");
-		    		worker.stop();
+		    		loginThread.stop();
 		    		break;
     			}
     		}
     		break;
+    	}
     	default: 
     		break;
     	}
@@ -348,7 +325,75 @@ public class EasyFetion extends Activity
     {
     	Log.i(TAG, "QUICKFETION ONSTART");
     	super.onStart();
+    	
+    	sysConfig = SystemConfig.getInstance();//new SystemConfig();
+    	
+    	FetionDatabase.getInstance().getAccount(sysConfig);
+    	
+    	if (sysConfig.sId == "") {
+        	Intent intent = new Intent();
+			intent.setClass(EasyFetion.this, AccountSettingDialog.class);
+			Bundle bundle = new Bundle();
+			intent.putExtras(bundle);
+			startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
+    	}
+    	else {
+    		FetionDatabase.getInstance().getUserInfo(sysConfig);
+    		Log.d(TAG, "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
+    		if (sysConfig.sipcProxyIp == "" || sysConfig.sipcProxyPort == -1) {
+    			//Log.e(TAG, "error getting sipc proxy from db");
+    			// download config
+    		}
+    		else {
+    			
+    			FetionContact contacts[] = FetionDatabase.getInstance().getContacts();
+    			for (FetionContact c: contacts) {
+    				contactList.put(c.sipUri, c);
+    			}
+    			
+    			loadContactList();
+    		}
+    	}
     }
+    
+    private void loadContactList() {
+    	ArrayList<HashMap<String, Object>> listItem = new ArrayList<HashMap<String, Object>>(); 
+		//for(int i=0;i<worker.contactList.size();i++)
+		Iterator<String> iter = contactList.keySet().iterator();
+		while(iter.hasNext())
+		{ 
+			String uri = iter.next();
+			String nn = contactList.get(uri).getDisplayName();
+			
+			String mn = contactList.get(uri).mobileNumber;
+			if (mn == null || mn.equals("")) {
+				mn = getString(R.string.mobileno_invalid);
+			}
+			
+			
+		    HashMap<String, Object> map = new HashMap<String, Object>(); 
+		    map.put("FetionImage", R.drawable.icon); 
+		    map.put("FetionNickName", nn); 
+		    map.put("FetionMobileNo", mn); 
+		    listItem.add(map); 
+		} 
+		SimpleAdapter listItemAdapter = new SimpleAdapter(EasyFetion.this,
+			listItem,
+		    R.layout.contactlistitem,
+		            
+		    new String[] {"FetionImage",
+				"FetionNickName", 
+				"FetionMobileNo"},  
+		    
+		    new int[] {R.id.contactListItemIcon,
+				R.id.contactListItemName,
+				R.id.contactListItemNumber} 
+		); 
+		
+		
+		lvContacts.setAdapter(listItemAdapter);  
+    }
+    
     @Override
     protected void onRestart()
     {
@@ -360,6 +405,7 @@ public class EasyFetion extends Activity
     {
     	Log.i(TAG, "QUICKFETION ONRESUME");
     	super.onResume();
+
     }
     @Override
     protected void onPause()
@@ -377,7 +423,7 @@ public class EasyFetion extends Activity
     protected void onDestroy()
     {
     	//Log.i(TAG, "worker thread state is " + worker.isInterrupted());
-    	worker.toBeExited = true;
+    	/*worker.toBeExited = true;
     	if (worker.state == State.WAIT_MSG) {
     		Log.d(TAG, "tell a waiting thread to exit");
     		synchronized(worker) {
@@ -386,14 +432,21 @@ public class EasyFetion extends Activity
     	}
     	else {
     		Log.d(TAG, "tell a running thread to exit");
-    	}
+    	}*/
     	Log.i(TAG, "QUICKFETION ONDESTROY");
     	super.onDestroy();
+    	
+    	try {
+    		Network.closeSipcSocket();
+    	} catch (Exception e) {
+    		
+    	}
     }
     @Override
     protected void onSaveInstanceState(Bundle outState)
     {
     	Log.i(TAG, "QUICKFETION ONSAVEINSTANCESTATE");
+    	super.onSaveInstanceState(outState);
     }
     @Override 
     public void onConfigurationChanged(Configuration newConfig) {
@@ -406,6 +459,71 @@ public class EasyFetion extends Activity
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
     {
     	Log.d(TAG, "onMeasure(" + widthMeasureSpec + "," + heightMeasureSpec + ")");
+    	
+    }
+    @Override
+    public boolean onCreateOptionsMenu (Menu aMenu) {  
+        
+        super.onCreateOptionsMenu(aMenu);  
+        aMenu.add(0, MENU_SET_ACC_ID, 0, R.string.menu_set_account);  
+        aMenu.add(0, MENU_REFRESH_ID, 0, R.string.menu_refresh_contact_list);  
+        aMenu.add(0, MENU_ABOUT_ID, 0, R.string.menu_about);  
+        return true;  
+          
+    }  
+    @Override
+    public boolean onOptionsItemSelected (MenuItem aMenuItem) {  
+        
+        switch (aMenuItem.getItemId()) {  
+            case MENU_SET_ACC_ID:  
+            	Intent intent = new Intent();
+				intent.setClass(EasyFetion.this, AccountSettingDialog.class);
+				Bundle bundle = new Bundle();
+				intent.putExtras(bundle);
+				
+				sysConfig.mobileNumber = "";
+				sysConfig.userPassword = "";
+				sysConfig.sId = "";
+				sysConfig.userId = "";
+				
+				startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
+                break;  
+            case MENU_REFRESH_ID:  
+				showDialog(DIALOG_REFRESH_PROGRESS);
+				FetionDatabase.getInstance().clearContacts();
+	    		sysConfig.contactVersion = "0";
+				refreshThread = new RefreshThread(sysConfig, crypto,
+						contactList, refreshUiHandler);
+				refreshThread.start();
+                break;  
+            case MENU_ABOUT_ID:  
+                showerr(TAG, "This client is fucking awesome!");  
+                break;  
+        }  
+        return super.onOptionsItemSelected(aMenuItem);
+    }  
+    
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            case DIALOG_LOGIN_PROGRESS: {
+                ProgressDialog dialog = new ProgressDialog(this);
+                dialog.setTitle("Login");
+                dialog.setMessage("Please wait while loging in...");
+                dialog.setIndeterminate(true);
+                dialog.setCancelable(true);
+                return dialog;
+            }
+            case DIALOG_REFRESH_PROGRESS: {
+                ProgressDialog dialog = new ProgressDialog(this);
+                dialog.setTitle("Refresh");
+                dialog.setMessage("Please wait while refreshing...");
+                dialog.setIndeterminate(true);
+                dialog.setCancelable(true);
+                return dialog;
+            }
+        }
+        return null;
     }
 }
         

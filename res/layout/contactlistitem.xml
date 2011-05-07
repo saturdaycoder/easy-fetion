@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?> 
     <RelativeLayout        
-        android:id="@+id/RelativeLayout01"        
+        android:id="@+id/relativeLayoutContactListItem"        
         android:layout_width="fill_parent"        
         xmlns:android="http://schemas.android.com/apk/res/android"        
         android:layout_height="wrap_content"        
@@ -12,22 +12,22 @@
             android:layout_alignParentLeft="true"      
             android:layout_width="40dip"        
             android:layout_height="40dip"        
-            android:id="@+id/FetionImage"      
+            android:id="@+id/contactListItemIcon"      
             />    
         <TextView        
-            android:text="TextView01"        
+            android:text="Contact Name"        
             android:layout_height="wrap_content"        
             android:textSize="16dip"        
             android:layout_width="fill_parent"    
-            android:layout_toRightOf="@+id/FetionImage"    
-            android:id="@+id/FetionNickName"      
+            android:layout_toRightOf="@+id/contactListItemIcon"    
+            android:id="@+id/contactListItemName"      
             /> 
         <TextView        
-            android:text="TextView02"        
+            android:text="Mobile Number"        
             android:layout_height="wrap_content"        
             android:layout_width="fill_parent"        
-            android:layout_below="@+id/FetionNickName"  
-            android:layout_toRightOf="@+id/FetionImage"        
-            android:id="@+id/FetionMobileNo"      
+            android:layout_below="@+id/contactListItemName"  
+            android:layout_toRightOf="@+id/contactListItemIcon"        
+            android:id="@+id/contactListItemNumber"      
             /> 
  </RelativeLayout>  

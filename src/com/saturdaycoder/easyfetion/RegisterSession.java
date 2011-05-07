@@ -26,6 +26,7 @@ public class RegisterSession {
 	{
 		SipcRegisterCommand regMsg = new SipcRegisterCommand(sysConfig.sId,
 				crypto.cnonce, SystemConfig.protocolVersion);
+		Log.d(TAG, "sent: " + regMsg.toString());
 		os.write(regMsg.toString().getBytes());
 	}
 	
@@ -33,6 +34,7 @@ public class RegisterSession {
 	{
 		SipcMessageParser parser = new SipcMessageParser();
 		this.response = (SipcResponse)parser.parse(is);
+		Log.d(TAG, "received: " + response.toString());
 	}
 	
 	public void postprocess()

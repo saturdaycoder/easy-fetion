@@ -27,20 +27,20 @@ public class SystemConfig {
 	
 	public ArrayList<FetionContact> contacts = new ArrayList<FetionContact>();
 	
-	public String sId = "";
-	public String userId = "";
-	public String userUri = "";
-	public String configServersVersion = "";
-	public String configParametersVersion = "";
-	public String configHintsVersion = "";
-	public String sipcProxyIp = "";
-	public int sipcProxyPort = -1;
+	public String sId;// = "";
+	public String userId;// = "";
+	public String userUri;// = "";
+	public String configServersVersion;// = "";
+	public String configParametersVersion;// = "";
+	public String configHintsVersion;// = "";
+	public String sipcProxyIp;// = "";
+	public int sipcProxyPort;// = -1;
 	public static String clientType = "PC";
 	public static String clientPlatform = "W5.1";
-	public String portraitServersName = "";
-	public String portraitServersPath = "";
-	public String mobileNumber = "";
-	public String userPassword = "";
+	public String portraitServersName;// = "";
+	public String portraitServersPath;// = "";
+	public String mobileNumber;// = "";
+	public String userPassword;// = "";
 	public static String ssiHostName = "uid.fetion.com.cn";
 	public static String ssiHostIp = "221.130.45.212";
 	public static String fetionDomainName = "fetion.com.cn:";
@@ -57,6 +57,59 @@ public class SystemConfig {
 	private String TAG = "EasyFetion";
 	
 	private Socket navSocket;// = new Socket(navHostName, 80);
+	
+	private static SystemConfig instance = null;//new SystemConfig();
+	
+	public static SystemConfig getInstance() {
+		if (instance == null) {
+			synchronized(SystemConfig.class) {
+				if (instance == null) {
+					instance = new SystemConfig();
+				}
+			}
+			
+		}
+		return instance;
+	}
+	
+	protected SystemConfig(){
+		
+		Log.d(TAG, "SYSTEMCONFIG CTOR");
+		
+		publicIp = "";
+		lastLoginIp = "";
+		lastLoginPlace = "";
+		lastLoginTime = "";
+		
+		contacts = new ArrayList<FetionContact>();
+		
+		sId = "";
+		userId = "";
+		userUri = "";
+		configServersVersion = "";
+		configParametersVersion = "";
+		configHintsVersion = "";
+		sipcProxyIp = "";
+		sipcProxyPort = -1;
+		//clientType = "PC";
+		//clientPlatform = "W5.1";
+		portraitServersName = "";
+		portraitServersPath = "";
+		mobileNumber = "";
+		userPassword = "";
+		/*ssiHostName = "uid.fetion.com.cn";
+		ssiHostIp = "221.130.45.212";
+		fetionDomainName = "fetion.com.cn:";
+		navHostName = "nav.fetion.com.cn";
+		navHostIp = "221.130.45.201";
+		protocolVersion = "4.0.2510";*/
+		
+		personalVersion = "";
+		customConfigVersion = "";
+		contactVersion = "";
+		
+		state = 0;
+	}
 	
 	public void setUserInfo(Document userInfoXml)
 	{

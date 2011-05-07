@@ -155,7 +155,7 @@ public class Crypto {
 		
 	}
 	
-	public Crypto()
+	protected Crypto()
 	{
 		Random rand = new Random(System.currentTimeMillis());
 	
@@ -165,6 +165,13 @@ public class Crypto {
 			+ String.format("%04X", rand.nextInt(Integer.MAX_VALUE));
 
 	}
+	
+	protected static Crypto inst = new Crypto();
+	
+	public static Crypto getInstance() {
+		return inst;
+	}
+	
 	
 	public static byte[] base64Decode(byte raw[]) 
 	{

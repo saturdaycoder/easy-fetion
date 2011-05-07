@@ -4,11 +4,11 @@ import java.io.*;
 import android.util.Log;
 public class SipcMessageParser extends SocketMessageParser
 {
-	//private static String TAG = "EasyFetion";
+	private static String TAG = "EasyFetion";
 	
 	
 	
-	public SocketMessage parse(InputStream is) 
+	public SocketMessage parse(InputStream is)
 	{	
 		
 		byte output[] = new byte[2048];
@@ -17,22 +17,20 @@ public class SipcMessageParser extends SocketMessageParser
 		
 		try {
 			boolean reparse = false;
-			//Log.d(TAG, "SipcFactory start read");
 			len = is.read(output);
-			
-			//Log.d(TAG, "SipcFactory read " + len + "bytes");
+			Log.d(TAG, "read: " + len);
 			str = new String(output, 0, len);
 			SipcMessage resp1 = (SipcMessage)this.parse(str);
-			//Log.d(TAG, "sipc parser read: \"" + str + "\", len = " + len);
-			
 			String headerL = resp1.getHeaderValue("L");
 			
 			if (headerL == null) {
-				//Log.d(TAG, "no header L is read");
 				return resp1;
 			}
+			
+			
 						
 			int totallen = Integer.parseInt(headerL);
+			Log.d(TAG, "response length=" + totallen);
 			int headerlen = str.indexOf("\r\n\r\n") + 4;
 			
 			while (len < totallen + headerlen) {
@@ -45,8 +43,6 @@ public class SipcMessageParser extends SocketMessageParser
 				if (!reparse && len < totallen + headerlen)
 					reparse = true;
 			}
-			//Log.d(TAG, "len = " + len);
-			
 			if (reparse) 
 			{
 				return this.parse(str);
@@ -54,15 +50,17 @@ public class SipcMessageParser extends SocketMessageParser
 			else {
 				return resp1;
 			}
-			
-			
-		} catch (Exception e) {
-			Log.e(TAG, "error parsing input stream");
+		} catch (IOException e) {
+			Log.e(TAG, "error parsing input stream: " + e.getMessage());
+			return null;
+		}catch (NumberFormatException e) {
+			Log.e(TAG, "error parsing integer: " + e.getMessage());
 			return null;
 		}
 
 	}
-	public SocketMessage parse(String str) {
+	public SocketMessage parse(String str)
+	{
 		String tmp = str;
 
 		

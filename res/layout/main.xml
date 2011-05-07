@@ -4,45 +4,10 @@
     android:layout_width="300px"
     android:layout_height="600px"
     >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="未选定好友"
-    android:id="@+id/textSelContact" 
-    />
 <ListView 
-    android:layout_height="wrap_content" 
-    android:id="@+id/lvSelContact" 
-    android:layout_width="fill_parent"
-    android:choiceMode="none" android:clickable="false"/>
-<TextView 
-    android:text="全部好友列表" 
-    android:id="@+id/textView1" 
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content"
-    />
-<ListView 
-    android:layout_height="300px" 
+    android:layout_height="450px" 
     android:id="@+id/lvContacts" 
     android:layout_width="fill_parent"
     android:layout_gravity="center"/>
-<TextView 
-    android:text="消息内容" 
-    android:id="@+id/textView2" 
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content"
-    />
-<EditText 
-    android:layout_height="wrap_content" 
-    android:id="@+id/editMessage" 
-    android:layout_width="fill_parent" 
-    android:text="测试飞信"
-    />
-<Button 
-    android:text="发送" 
-    android:id="@+id/buttonSend" 
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content"
-    />
 </LinearLayout>
 

@@ -28,7 +28,7 @@ public class EasyFetionThread extends Thread
 
     public SystemConfig sysConfig;
     private Crypto crypto;
-    public SmsDbWriter smsDbWriter;
+    //public SmsDbWriter smsDbWriter;
     public FetionDatabase fetionDb;
 
     Handler uiHandler;
@@ -509,7 +509,7 @@ public class EasyFetionThread extends Thread
 			        		// write the sent message to sms database
 			        		if (msg.contact.mobileNumber != null 
 			        				&& !msg.contact.mobileNumber.equals("")) {
-			        			smsDbWriter.insertSentSms(msg.contact.mobileNumber,
+			        			SmsDbAdapter.insertSentSms(msg.contact.mobileNumber,
 			        						System.currentTimeMillis(), msg.msg);
 			        		}
 			        		else {

@@ -1,11 +1,12 @@
 package com.saturdaycoder.easyfetion;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import android.util.Log;
 
 public class FetionHttpMessageParser extends SocketMessageParser {
-	public SocketMessage parse(InputStream is) 
+	public SocketMessage parse(InputStream is)
 	{	
 		
 		byte output[] = new byte[2048];
@@ -55,7 +56,8 @@ public class FetionHttpMessageParser extends SocketMessageParser {
 		}
 
 	}
-	public SocketMessage parse(String str) {
+	public SocketMessage parse(String str)
+	{
 		String tmp = str;
 
 		

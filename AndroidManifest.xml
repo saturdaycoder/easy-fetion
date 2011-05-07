@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.saturdaycoder.easyfetion"
       android:versionCode="1"
-      android:versionName="1.0">
+      android:versionName="0.1">
       
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
@@ -35,5 +35,13 @@
         <activity android:name="PictureVerifyDialog" 
                   android:theme="@android:style/Theme.Dialog"
                   />
+        <activity android:name="MsgHistory" 
+                  android:theme="@android:style/Theme.Dialog"
+                  />
+        <!--  <receiver android:name="MsgHistory.SmsReceiver">
+        	<intent-filter>
+        		<action android:name="android.provider.Telephony.SMS_RECEIVED" />
+        	</intent-filter>
+        </receiver> -->
     </application>
 </manifest> 

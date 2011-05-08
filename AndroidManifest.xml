@@ -16,7 +16,9 @@
     <uses-permission android:name="android.permission.WRITE_SMS" />
     <uses-permission android:name="android.permission.CALL_PHONE"/>  
     <uses-permission android:name="android.permission.SEND_SMS"/>  
-    <uses-permission android:name="android.permission.RECEIVE_SMS"/>  
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-sdk android:minSdkVersion="4"></uses-sdk>
+    
 
     <application android:label="@string/app_name" android:icon="@drawable/icon">
         <activity android:name="EasyFetion"
@@ -31,12 +33,19 @@
         </activity>
         <activity android:name="AccountSettingDialog" 
                   android:theme="@android:style/Theme.Dialog"
+                  android:label="账户设置"
                   />
         <activity android:name="PictureVerifyDialog" 
                   android:theme="@android:style/Theme.Dialog"
+                  android:label="请输入验证码"
                   />
         <activity android:name="MsgHistory" 
                   android:theme="@android:style/Theme.Dialog"
+                  android:label="消息历史"
+                  />
+        <activity android:name="UserManualDialog" 
+                  android:theme="@android:style/Theme.Dialog"
+                  android:label="用户须知"
                   />
         <!--  <receiver android:name="MsgHistory.SmsReceiver">
         	<intent-filter>

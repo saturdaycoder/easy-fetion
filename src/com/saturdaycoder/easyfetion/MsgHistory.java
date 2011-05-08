@@ -80,6 +80,12 @@ public class MsgHistory extends Activity
         {
         	//@Override
         	public void onClick(View v) {
+        		if (editMsgText.getText().toString().equals(""))
+        			return;
+        		
+        		btnSend.setClickable(false);
+        		editMsgText.setEnabled(false);
+        		
         		FetionMsg fm = new FetionMsg();
         		FetionContact fc = FetionDatabase.getInstance().getContactByUri(sipuri);
         		fm.contact = fc;
@@ -102,6 +108,8 @@ public class MsgHistory extends Activity
 				intent.setClass(MsgHistory.this, PictureVerifyDialog.class);
 				Bundle bundle = new Bundle();
 				bundle.putByteArray("picture", thread.verification.getPicture());
+				bundle.putString("text", thread.verification.text);
+				bundle.putString("tips", thread.verification.tips);
 				intent.putExtras(bundle);
 				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG);
 				break;
@@ -110,21 +118,31 @@ public class MsgHistory extends Activity
 				popNotify("successfully sent msg to " + fm.contact.nickName
 						+ ": " + fm.msg);
 				loadMsgList();
+				btnSend.setClickable(true);
+				editMsgText.setText("");
+        		editMsgText.setEnabled(true);
 				break;
 			}
 			case MSG_FAILED:{
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("failed sent msg to " + fm.contact.nickName
 						+ ": " + fm.msg);
+				btnSend.setClickable(true);
+        		editMsgText.setEnabled(true);
 				break;
 			}
 			case NETWORK_ERROR:{
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("msg failed to " + fm.contact.nickName
 						+ ": " + fm.msg + ", because of network error");
+				btnSend.setClickable(true);
+        		editMsgText.setEnabled(true);
 				break;
 			}
 			default:
+				btnSend.setClickable(true);
+        		editMsgText.setEnabled(true);
+        		break;
 			}
 		}
 	}
@@ -186,10 +204,12 @@ public class MsgHistory extends Activity
     	case INTENT_PIC_VERIFY_DIALOG: {
     		if (thread.state == SendMsgThread.State.AUTHENTICATE_NEED_CONFIRM)
     		{
+    			Log.d(TAG, "thread state=" + thread.state.toString());
     			switch (resultCode) {
     			case RESULT_OK: {
 		    		Bundle bundle = data.getExtras();
-		    		thread.verification.code = bundle.getString("code"); 
+		    		thread.verification.code = bundle.getString("code");
+		    		Log.d(TAG, "wake up thread");
 		    		synchronized(thread) {
 		    			thread.notify();
 		    		}

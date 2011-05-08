@@ -185,8 +185,10 @@ public class SendMsgThread extends Thread{
     		            	auth.postprocessVerification(verification);
     		            	notifyState(State.AUTHENTICATE_NEED_CONFIRM, fm);
     		            	synchronized(this) {
+    		            		Log.d(TAG, "thread is sleeping");
     		                	wait();
     		                }
+    		            	Log.d(TAG, "thread is awaken");
     		            	retry = true;
     		            	break;
     		            default:

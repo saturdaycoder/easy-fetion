@@ -1,5 +1,6 @@
 package com.saturdaycoder.easyfetion;
 import android.net.*;
+import java.lang.IllegalAccessException;
 import java.net.*;
 import android.app.*;
 import android.net.wifi.*;
@@ -7,6 +8,7 @@ import android.util.Log;
 import android.content.*;
 import java.io.IOException;
 import java.io.*;
+import android.telephony.*;
 public class Network {
 
 	private static final String TAG="EasyFetion";
@@ -62,21 +64,51 @@ public class Network {
 		
 		Network.activity = activity;
 	}
-	public static String getWifiMacAddr() {
+	public static String getWifiMacAddr() throws IllegalAccessException {
 		WifiManager wifi = (WifiManager) activity.getSystemService(Context.WIFI_SERVICE);
-        if (wifi == null) {
-        
-        	return "ffffffffffff";
-        }
+		if (wifi == null) {
+			throw new IllegalAccessException("Can not access WIFI service");
+		}
         
         WifiInfo info = wifi.getConnectionInfo();
         if (info == null) {
-        
-        	return "ffffffffffff";
+        	throw new IllegalAccessException("Unable to get WIFI information");
         }
-        String macAddr = info.getMacAddress().replace(":", "");
+        
+        String macAddr = info.getMacAddress();
+        if (macAddr == null || macAddr.equals("")) {
+        	throw new IllegalAccessException("Illegal WIFI MAC address");
+        }
+        macAddr = macAddr.replace(":", "");
         
         return macAddr;
+	}
+	public static String getPhoneNumber() throws IllegalAccessException {
+		TelephonyManager tm = (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
+		if (tm == null) {
+			throw new IllegalAccessException("Can not access TELEPHONY service");
+		}
+		
+		String line1Number = tm.getLine1Number();
+		if (line1Number == null || line1Number.equals("")) {
+			throw new IllegalAccessException("Illegal Line 1 Number");
+		}
+		
+		return line1Number;
+	}
+	
+	public static String getDeviceId() throws IllegalAccessException {
+		TelephonyManager tm = (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
+		if (tm == null) {
+			throw new IllegalAccessException("Can not access TELEPHONY service");
+		}
+        
+        String devid = tm.getDeviceId();
+        if (devid == null || devid.equals("")) {
+        	throw new IllegalAccessException("Illegal Device ID");
+        }
+        
+        return devid;
 	}
 	public static boolean isNetworkAvailable() { 
 	    Context context = activity.getApplicationContext();

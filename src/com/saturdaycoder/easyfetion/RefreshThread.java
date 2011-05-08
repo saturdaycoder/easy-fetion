@@ -169,6 +169,7 @@ public class RefreshThread extends Thread{
 	            	synchronized(this) {
 	                	wait();
 	                }
+	            	Log.d(TAG, "refresh thread awakes");
 	            	//if (!verification.code.equals("")) {
 	            		//retry = true;
 	            	retry = true;

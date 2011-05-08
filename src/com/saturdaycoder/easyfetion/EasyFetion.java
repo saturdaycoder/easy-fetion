@@ -54,8 +54,8 @@ public class EasyFetion extends Activity
 {
 	private static String TAG = "EasyFetion";
 	
-	private Button btnSend;
-	private EditText editMsg;
+	private String lastLoginAcc = "";
+	private String lastPasswd = "";
 
 	private static final int MENU_SET_ACC_ID = Menu.FIRST;  
 	private static final int MENU_REFRESH_ID = Menu.FIRST + 1;  
@@ -65,8 +65,8 @@ public class EasyFetion extends Activity
 	private static final int DIALOG_REFRESH_PROGRESS = 1;
 	
 	private static final int INTENT_ACC_SET_DIALOG = 0;
-	private static final int INTENT_PIC_VERIFY_DIALOG = 1;
-	private static final int INTENT_MSG_HISTORY = 2;
+	private static final int INTENT_PIC_VERIFY_DIALOG_FOR_LOGIN = 1;
+	private static final int INTENT_PIC_VERIFY_DIALOG_FOR_AUTHENTICATE = 2;
 	
 	private ListView lvContacts;
 	private SystemConfig sysConfig;
@@ -117,8 +117,10 @@ public class EasyFetion extends Activity
 				intent.setClass(EasyFetion.this, PictureVerifyDialog.class);
 				Bundle bundle = new Bundle();
 				bundle.putByteArray("picture", refreshThread.verification.getPicture());
+				bundle.putString("text", refreshThread.verification.text);
+				bundle.putString("tips", refreshThread.verification.tips);
 				intent.putExtras(bundle);
-				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG);
+				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG_FOR_AUTHENTICATE);
 				
 				break;
 			}
@@ -162,8 +164,10 @@ public class EasyFetion extends Activity
 				intent.setClass(EasyFetion.this, PictureVerifyDialog.class);
 				Bundle bundle = new Bundle();
 				bundle.putByteArray("picture", loginThread.verification.getPicture());
+				bundle.putString("text", loginThread.verification.text);
+				bundle.putString("tips", loginThread.verification.tips);
 				intent.putExtras(bundle);
-				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG);
+				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG_FOR_LOGIN);
 				
 				break;
 			}
@@ -185,6 +189,7 @@ public class EasyFetion extends Activity
 				showerr(TAG, "Congratulations! Your ass is mine!!");
 				
 				showDialog(DIALOG_REFRESH_PROGRESS);
+				sysConfig.contactVersion = "0";
 	    		
 				refreshThread = new RefreshThread(sysConfig, crypto,
 						contactList, refreshUiHandler);
@@ -269,6 +274,7 @@ public class EasyFetion extends Activity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
+    	Log.d(TAG, "onActivityResult: " + requestCode + ", " + resultCode );
     	switch (requestCode) {
     	case INTENT_ACC_SET_DIALOG: {
     		if (resultCode == RESULT_OK) {
@@ -278,6 +284,7 @@ public class EasyFetion extends Activity
 	    		}
 	    		sysConfig.mobileNumber = bundle.getString("mobileno");
 	    		sysConfig.userPassword = bundle.getString("passwd");
+	    		lastLoginAcc = sysConfig.mobileNumber;
 	    		if (sysConfig.mobileNumber == null || sysConfig.userPassword == null) {
 	    			Log.e(TAG, "retrieving user account:" + 
 	    					sysConfig.mobileNumber + ", " + sysConfig.userPassword);
@@ -295,8 +302,8 @@ public class EasyFetion extends Activity
     		}
     		break;
     	}
-    	case INTENT_PIC_VERIFY_DIALOG: {
-    		if (loginThread.state == LoginThread.State.LOGIN_NEED_CONFIRM)
+    	case INTENT_PIC_VERIFY_DIALOG_FOR_LOGIN: {
+    		if (loginThread != null && (loginThread.state == LoginThread.State.LOGIN_NEED_CONFIRM))
     		{
     			switch (resultCode) {
     			case RESULT_OK: {
@@ -310,6 +317,26 @@ public class EasyFetion extends Activity
 		    	default:
 		    		Log.e(TAG, "pic verify destroyed");
 		    		loginThread.stop();
+		    		break;
+    			}
+    		}
+    		break;
+    	}
+    	case INTENT_PIC_VERIFY_DIALOG_FOR_AUTHENTICATE: {
+    		Log.d(TAG, "refreshThread state = " + refreshThread.state.ordinal());
+    		if (refreshThread != null && (refreshThread.state == RefreshThread.State.AUTHENTICATE_NEED_CONFIRM)) {
+    			switch (resultCode) {
+    			case RESULT_OK: {
+		    		Bundle bundle = data.getExtras();
+		    		refreshThread.verification.code = bundle.getString("code"); 
+		    		synchronized(refreshThread) {
+		    			refreshThread.notify();
+		    		}
+		    		break;
+    			}
+		    	default:
+		    		Log.e(TAG, "pic verify destroyed");
+		    		refreshThread.stop();
 		    		break;
     			}
     		}
@@ -331,13 +358,16 @@ public class EasyFetion extends Activity
     	FetionDatabase.getInstance().getAccount(sysConfig);
     	
     	if (sysConfig.sId == "") {
+    		lastLoginAcc = "";
         	Intent intent = new Intent();
 			intent.setClass(EasyFetion.this, AccountSettingDialog.class);
 			Bundle bundle = new Bundle();
+			bundle.putString("lastlogin", lastLoginAcc);
 			intent.putExtras(bundle);
 			startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
     	}
     	else {
+    		lastLoginAcc = sysConfig.mobileNumber;
     		FetionDatabase.getInstance().getUserInfo(sysConfig);
     		Log.d(TAG, "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
     		if (sysConfig.sipcProxyIp == "" || sysConfig.sipcProxyPort == -1) {
@@ -422,19 +452,15 @@ public class EasyFetion extends Activity
     @Override
     protected void onDestroy()
     {
-    	//Log.i(TAG, "worker thread state is " + worker.isInterrupted());
-    	/*worker.toBeExited = true;
-    	if (worker.state == State.WAIT_MSG) {
-    		Log.d(TAG, "tell a waiting thread to exit");
-    		synchronized(worker) {
-    			worker.notify();
-    		}
-    	}
-    	else {
-    		Log.d(TAG, "tell a running thread to exit");
-    	}*/
+
     	Log.i(TAG, "QUICKFETION ONDESTROY");
     	super.onDestroy();
+    	
+    	if (loginThread != null)
+    		loginThread.stop();
+    	
+    	if (refreshThread != null)
+    		refreshThread.stop();
     	
     	try {
     		Network.closeSipcSocket();
@@ -479,12 +505,14 @@ public class EasyFetion extends Activity
             	Intent intent = new Intent();
 				intent.setClass(EasyFetion.this, AccountSettingDialog.class);
 				Bundle bundle = new Bundle();
+				bundle.putString("lastlogin", lastLoginAcc);
 				intent.putExtras(bundle);
 				
 				sysConfig.mobileNumber = "";
 				sysConfig.userPassword = "";
 				sysConfig.sId = "";
 				sysConfig.userId = "";
+				
 				
 				startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
                 break;  

@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-
+import android.widget.TextView;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -22,6 +22,10 @@ public class PictureVerifyDialog extends Activity
 	EditText editCode;
 	ImageView imageCode;
 	
+	TextView textVerifyText;
+	TextView textVerifyTips;
+	
+	
 	Intent intent;
 	Bundle bundle;
 	@Override
@@ -36,12 +40,24 @@ public class PictureVerifyDialog extends Activity
 		btnAuth = (Button)findViewById(R.id.buttonAuth);
         editCode = (EditText)findViewById(R.id.editCode);
         imageCode = (ImageView)findViewById(R.id.imageCode);
-        
-        //editCode.setVisibility(EditText.INVISIBLE);
-        //imageCode.setVisibility(ImageView.INVISIBLE);
-        //btnAuth.setVisibility(Button.INVISIBLE);
+        textVerifyText = (TextView)findViewById(R.id.textVerifyText);
+        textVerifyTips = (TextView)findViewById(R.id.textVerifyTips);
+         
         byte encPicData[] = bundle.getByteArray("picture");
-		byte decPicData[] = Crypto.base64Decode(encPicData);
+    	byte decPicData[] = Crypto.base64Decode(encPicData);
+    	
+    	String tt = bundle.getString("text");
+    	String tp = bundle.getString("tips");
+    	
+    	if (tt != null)
+    		textVerifyText.setText(tt);
+    	else
+    		textVerifyText.setText("");
+    	
+    	if (tp != null)
+    		textVerifyTips.setText(tp);
+    	else
+    		textVerifyTips.setText("");
         
     	//decode pic
     	if (decPicData != null) {
@@ -65,11 +81,12 @@ public class PictureVerifyDialog extends Activity
         {
         	//@Override
         	public void onClick(View v) {
+        		Intent i = new Intent();
 				Bundle b = new Bundle();
 				b.putString("code", editCode.getText().toString());
 				
-				intent.putExtras(b);
-				PictureVerifyDialog.this.setResult(RESULT_OK, intent);
+				i.putExtras(b);
+				PictureVerifyDialog.this.setResult(RESULT_OK, i);
 				PictureVerifyDialog.this.finish();
         	}
         });

@@ -3,9 +3,10 @@
     android:orientation="vertical"
     android:layout_width="300px"
     android:layout_height="600px"
+    
     >
 <ListView 
-    android:layout_height="450px" 
+    android:layout_height="350px" 
     android:id="@+id/lvContacts" 
     android:layout_width="fill_parent"
     android:layout_gravity="center"/>

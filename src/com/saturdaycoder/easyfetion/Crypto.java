@@ -175,10 +175,14 @@ public class Crypto {
 	
 	public static byte[] base64Decode(byte raw[]) 
 	{
+		if (raw == null)
+			return null;
 		return Base64.decode(new String(raw));
 	}
 	public static byte[] base64Encode(byte data[]) 
 	{
+		if (data == null)
+			return null;
 		return Base64.encode(data).getBytes();
 	}
 

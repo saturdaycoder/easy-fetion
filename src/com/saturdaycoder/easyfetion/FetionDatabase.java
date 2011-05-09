@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 public class FetionDatabase extends SQLiteOpenHelper  
 {
-	private static final String TAG="EasyFetion";
+	
 	private static final String DATABASE_NAME = "userdb";
 	private static final int DB_VERSION = 1;
 	private static final boolean encryptUserPasswd = true;
@@ -41,9 +41,9 @@ public class FetionDatabase extends SQLiteOpenHelper
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		Debugger.d( "FetionDatabase onCreate");
-		db.execSQL("CREATE TABLE contacts (uri TEXT primary key, "
+		db.execSQL("CREATE TABLE contacts (uri TEXT DEFAULT '', "
 				+ " version TEXT DEFAULT '', "
-				+ " sid TEXT DEFAULT '', "
+				+ " sid TEXT primary key, "
 				+ " mobile_no TEXT DEFAULT '', "
 				+ " basic_service_status INTEGER DEFAULT -1, "
 				+ " carrier TEXT DEFAULT '', "
@@ -99,8 +99,8 @@ public class FetionDatabase extends SQLiteOpenHelper
 	public void setContact(FetionContact contact)
 	{
 		SQLiteDatabase db = this.getWritableDatabase();
-		Cursor cursor = db.rawQuery("select * from contacts where uri='" 
-				+ contact.sipUri +"'", null);
+		Cursor cursor = db.rawQuery("select * from contacts where sid='" 
+				+ contact.userId +"'", null);
 		if (cursor.moveToFirst()) {
 			Debugger.d( "update contact " + contact.sipUri);
 			db.execSQL("update contacts set uri='" + contact.sipUri + "',"
@@ -157,7 +157,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 	public void removeContact(FetionContact contact)
 	{
 		SQLiteDatabase db = this.getWritableDatabase();
-		db.execSQL("delete from contacts where uri='" + contact.sipUri + "'");
+		db.execSQL("delete from contacts where sid='" + contact.userId + "'");
 	}
 	
 	public boolean hasContactByUri(String sipuri)
@@ -171,6 +171,48 @@ public class FetionDatabase extends SQLiteOpenHelper
 			return false;
 	}
 	
+	public boolean hasContactByUserId(String sid)
+	{
+		SQLiteDatabase db = this.getReadableDatabase();
+		Debugger.d( "query contact db for '" + sid + "'");
+		Cursor cursor = db.rawQuery("select * from contacts where sid='" + sid + "'", null);
+		if (cursor.moveToFirst())
+			return true;
+		else 
+			return false;
+	}
+	public FetionContact getContactByUserId(String sid)
+	{
+		SQLiteDatabase db = this.getReadableDatabase();
+		Cursor cursor = db.rawQuery("select * from contacts where sid='" + sid + "'", null);
+		if (cursor.moveToFirst())
+		{
+			FetionContact c = new FetionContact();
+			c.sipUri = cursor.getString(0); //uri TEXT primary key, "
+			c.version = cursor.getString(1);//+ " version TEXT, "
+			c.userId = cursor.getString(2);//+ " sid TEXT, "
+			c.mobileNumber = cursor.getString(3);//+ " mibile_no TEXT, "
+			//+ " basic_service_status INTEGER, "
+			c.carrier = cursor.getString(5);//+ " carrier TEXT, "
+			c.carrierStatus = cursor.getInt(6);//+ " carrier_status INTEGER, "
+			c.portraitCrc = cursor.getString(7);//+ " portrait_crc INTEGER, "
+			c.localName = cursor.getString(8);//+ " name TEXT, "
+			c.nickName = cursor.getString(9);//+ " nickname TEXT, "
+			c.gender = cursor.getInt(10);//+ " gender INTEGER, "
+			c.birthday = cursor.getString(11);//+ " birth_date TIME, "
+			//+ " birthday_valid INTEGER, "
+			c.impression = cursor.getString(13);//+ " impresa TEXT, "
+			//+ " carrier_region TEXT, "
+			//+ " user_region TEXT, "
+			//+ " profile TEXT, "
+			//+ " blood_type INTEGER, "
+			//+ " occupation TEXT, "
+			//+ " hobby TEXT, "
+			c.scoreLevel = cursor.getInt(20);//+ " score_level INTEGER)");
+			return c;
+		}
+		else return null;
+	}
 	public FetionContact getContactByUri(String sipuri)
 	{
 		SQLiteDatabase db = this.getReadableDatabase();

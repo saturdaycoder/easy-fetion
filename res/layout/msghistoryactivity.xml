@@ -1,34 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="280dip"
+    android:layout_height="420dip"
     >
 <ListView 
-    android:layout_height="300px"
+    android:layout_height="fill_parent"
     android:id="@+id/lvMsgList" 
-    android:layout_width="fill_parent"
+    android:layout_width="320dip"
     android:choiceMode="none" android:clickable="false"
     android:stackFromBottom="true"
-    android:transcriptMode="alwaysScroll"/>
-    
+    android:transcriptMode="alwaysScroll"
+    android:layout_above="@+id/editMsgText" 
     android:layout_alignParentTop="true"
+    />
 <EditText 
     android:id="@+id/editMsgText" 
     android:text=""
-    android:layout_height="fill_parent" 
+    android:layout_height="100dip" 
     android:layout_width="200dip" 
-    android:layout_below="@+id/lvMsgList"
     android:layout_alignParentBottom="true"
     />
 <Button 
     android:text="@string/button_send_text" 
     android:id="@+id/btnSendMsg" 
-    android:layout_width="100dip" 
-    android:layout_height="60dip"
+    android:layout_width="80dip" 
+    android:layout_height="50dip"
     android:layout_toRightOf="@+id/editMsgText"
-    android:layout_below="@+id/lvMsgList"
-    
     android:layout_alignTop="@+id/editMsgText"
     />    
 </RelativeLayout>

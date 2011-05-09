@@ -1,6 +1,5 @@
 package com.saturdaycoder.easyfetion;
 import android.app.*;
-import android.util.Log;
 import android.widget.EditText;
 import android.widget.Button;
 import android.widget.Toast;
@@ -13,7 +12,7 @@ public class AccountSettingDialog extends Activity
 	private EditText editPasswd;
 	private Button btnOk;
 	private Button btnCancel;
-	private static final String TAG="EasyFetion";
+	
 	private Intent intent;
 	private Bundle bundle;
 	private String mobileno;
@@ -27,7 +26,7 @@ public class AccountSettingDialog extends Activity
 		editMobileno = (EditText)findViewById(R.id.editAcc);
 		editPasswd = (EditText)findViewById(R.id.editAccPasswd);
 		btnOk = (Button)findViewById(R.id.btnConfirmAccountSetting);
-		btnCancel = (Button)findViewById(R.id.btnCancelAccountSetting);
+		//btnCancel = (Button)findViewById(R.id.btnCancelAccountSetting);
 		intent = this.getIntent();
 		bundle = intent.getExtras();
 		String lastLogin = bundle.getString("lastlogin");
@@ -73,7 +72,7 @@ public class AccountSettingDialog extends Activity
 				}
 			}
 		});
-		btnCancel.setOnClickListener(new Button.OnClickListener() {
+	/*	btnCancel.setOnClickListener(new Button.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Bundle b = new Bundle();
@@ -82,7 +81,7 @@ public class AccountSettingDialog extends Activity
 				AccountSettingDialog.this.setResult(RESULT_CANCELED, intent);
 				AccountSettingDialog.this.finish();
 			}
-		});
+		});*/
 	}
 	
 	@Override

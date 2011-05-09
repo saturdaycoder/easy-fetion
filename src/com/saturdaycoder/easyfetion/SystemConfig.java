@@ -1,22 +1,10 @@
 package com.saturdaycoder.easyfetion;
 import java.io.*;
 import java.net.*;  
-
 import org.w3c.dom.*;
-import org.xml.sax.*;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
-
-import android.util.Log;
-
 import javax.xml.parsers.*;
-//import javax.xml.transform.*;
-//import javax.xml.transform.dom.*;
-//import javax.xml.transform.stream.*;
-//import android.content.*;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Arrays;
 import java.util.ArrayList;
 
 public class SystemConfig {

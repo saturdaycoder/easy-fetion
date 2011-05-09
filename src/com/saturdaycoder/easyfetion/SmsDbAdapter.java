@@ -1,7 +1,5 @@
 package com.saturdaycoder.easyfetion;
-import java.text.*;
-import android.util.Log;
-import java.lang.System;
+
 import android.database.Cursor;
 import android.content.ContentResolver;
 import android.content.ContentValues;

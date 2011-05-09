@@ -15,16 +15,16 @@ public class FetionHttpMessageParser extends SocketMessageParser {
 		
 		try {
 			boolean reparse = false;
-			//Log.d(TAG, "FetionHttpFactory start read");
+			//Debugger.d( "FetionHttpFactory start read");
 			len = is.read(output);
 			
-			//Log.d(TAG, "SipcFactory read " + len + "bytes");
+			//Debugger.d( "SipcFactory read " + len + "bytes");
 			str = new String(output, 0, len);
 			FetionHttpMessage resp1 = (FetionHttpMessage)this.parse(str);
 			String headerL = resp1.getHeaderValue("Content-Length");
 			
 			if (headerL == null) {
-				Log.d(TAG, "no header Content-Length is read");
+				Debugger.d( "no header Content-Length is read");
 				return resp1;
 			}
 			
@@ -40,7 +40,7 @@ public class FetionHttpMessageParser extends SocketMessageParser {
 				if (!reparse)
 					reparse = true;
 			}
-			Log.d(TAG, "len = " + len);
+			Debugger.d( "len = " + len);
 			
 			if (reparse) 
 			{
@@ -51,7 +51,7 @@ public class FetionHttpMessageParser extends SocketMessageParser {
 			
 			
 		} catch (Exception e) {
-			Log.e(TAG, "error parsing input stream");
+			Debugger.e( "error parsing input stream");
 			return null;
 		}
 

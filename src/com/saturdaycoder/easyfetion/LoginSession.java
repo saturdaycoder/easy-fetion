@@ -48,7 +48,7 @@ public class LoginSession {
 		FetionHttpMessage loginRequest = new FetionLoginHttpRequest(sysConfig.userId,
 				sysConfig.userPassword, sysConfig.mobileNumber, pv);
 
-		Log.d(TAG, "sending login request: " + loginRequest.toString());
+		Debugger.d( "sending login request: " + loginRequest.toString());
 		os.write(loginRequest.toString().getBytes());
 	}
 	public void read() {
@@ -58,6 +58,18 @@ public class LoginSession {
 	public void postprocess()
 			throws SAXException, IOException, ParserConfigurationException
 	{
+		
+		String cookie = response.getHeaderValue("Set-Cookie");
+		if (cookie != null) {
+			int ind1 = cookie.indexOf("ssic=");
+			if (ind1 != -1) {
+				String ssic = cookie.substring(ind1 + 5);
+				ssic = ssic.substring(0, ssic.indexOf(';'));
+				sysConfig.ssic = ssic;
+			}
+				
+		}
+		
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance(); 
 		DocumentBuilder db = dbf.newDocumentBuilder(); 
 		Document document = db.parse(new ByteArrayInputStream(response.body.getBytes())); // SAXException/IOException
@@ -71,10 +83,10 @@ public class LoginSession {
 		String useruri = nodeSid.getNodeValue();
 		sysConfig.userUri = useruri;
 		sysConfig.sId = useruri.substring(useruri.indexOf("sip:") + 4, useruri.indexOf('@'));
-		Log.d(TAG, "user's sId = \"" + sysConfig.sId + "\"");
+		Debugger.d( "user's sId = \"" + sysConfig.sId + "\"");
 		Node nodeUserId = nnmUser.getNamedItem("user-id");
 		sysConfig.userId = nodeUserId.getNodeValue();		
-		Log.d(TAG, "user's userId = \"" + sysConfig.userId + "\"");
+		Debugger.d( "user's userId = \"" + sysConfig.userId + "\"");
 	}
 	
 	public void postprocessVerification(FetionPictureVerification pv)
@@ -84,7 +96,7 @@ public class LoginSession {
 			DocumentBuilder db = dbf.newDocumentBuilder(); //ParserConfigurationException
 			Document document = db.parse(new ByteArrayInputStream(response.body.getBytes())); // SAXException/IOException
 			Node node = document.getFirstChild();
-			//Log.d(TAG, "rootnode name is " + node.getNodeName());
+			//Debugger.d( "rootnode name is " + node.getNodeName());
 			
 			Node vn = node.getFirstChild();
 			pv.algorithm = vn.getAttributes().getNamedItem("algorithm").getNodeValue();
@@ -92,7 +104,7 @@ public class LoginSession {
 			pv.text = vn.getAttributes().getNamedItem("text").getNodeValue();
 			pv.tips = vn.getAttributes().getNamedItem("tips").getNodeValue();
 		} catch (Exception e) {
-			Log.e(TAG, "error parsing xml " + e.getMessage());
+			Debugger.e( "error parsing xml " + e.getMessage());
 			//return null;
 			pv.algorithm = "";
 			pv.type = "";

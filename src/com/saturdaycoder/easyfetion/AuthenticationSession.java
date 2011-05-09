@@ -40,7 +40,7 @@ public class AuthenticationSession {
 		char rsa[] = crypto.computeResponse(sysConfig.userId, sysConfig.userPassword);
 		SipcCommand authMsg = new SipcAuthenticateCommand(sysConfig, 
 				new String(rsa), pv);
-		Log.d(TAG, "sent: " + authMsg.toString());
+		Debugger.d( "sent: " + authMsg.toString());
 		os.write(authMsg.toString().getBytes());
 	}
 	
@@ -48,7 +48,7 @@ public class AuthenticationSession {
 	{
 		SipcMessageParser parser = new SipcMessageParser();
 		this.response = (SipcResponse)parser.parse(is);
-		Log.d(TAG, "auth response=\"" + response + "\"");
+		Debugger.d( "auth response=\"" + response + "\"");
 	}
 	
 	public void postprocessJunk()
@@ -65,10 +65,10 @@ public class AuthenticationSession {
 			DocumentBuilder db = dbf.newDocumentBuilder(); //ParserConfigurationException
 			Document document = db.parse(new ByteArrayInputStream(response.body.getBytes())); // SAXException/IOException
 			Node node = document.getFirstChild();
-			//Log.d(TAG, "rootnode name is " + node.getNodeName());
+			//Debugger.d( "rootnode name is " + node.getNodeName());
 			
 			NodeList nl = node.getChildNodes();
-			Log.d(TAG, "rootnode name is " + node.getNodeName());
+			Debugger.d( "rootnode name is " + node.getNodeName());
 			
 			
 			for (int j = 0; j < nl.getLength(); ++j) 
@@ -79,7 +79,7 @@ public class AuthenticationSession {
 				// user info
 				if (nj.getNodeName().equals("user-info"))
 				{
-					Log.d(TAG, "found user-info");
+					Debugger.d( "found user-info");
 					NodeList njl = nj.getChildNodes();
 					for (int k = 0; k < njl.getLength(); ++k) 
 					{
@@ -88,7 +88,7 @@ public class AuthenticationSession {
 						// contact-list
 						if (nk.getNodeName().equals("contact-list"))
 						{
-							Log.d(TAG, "found contact-list");
+							Debugger.d( "found contact-list");
 							sysConfig.contactVersion = nk.getAttributes().getNamedItem("version").getNodeValue();
 							
 							NodeList nkl = nk.getChildNodes();
@@ -99,7 +99,7 @@ public class AuthenticationSession {
 								// buddies
 								if (nl2.getNodeName().equals("buddies"))
 								{
-									Log.d(TAG, "found buddies");
+									Debugger.d( "found buddies");
 									NodeList nll = nl2.getChildNodes();
 									for (int m = 0; m < nll.getLength(); ++m)
 									{
@@ -113,11 +113,11 @@ public class AuthenticationSession {
 										c.identity = b.getAttributes().getNamedItem("p").getNodeValue();
 										
 										
-										if (ca != null && !ca.containsKey(c.sipUri)) {
+										if (ca != null) {
 											ca.put(c.sipUri, c);
 										}
 										
-										Log.d(TAG, "added contact:" + c.sipUri
+										Debugger.d( "added contact:" + c.sipUri
 												+ "," + c.userId 
 												+ "," + c.identity);
 									}
@@ -135,7 +135,7 @@ public class AuthenticationSession {
 			}
 			//return ca;
 		} catch (Exception e) {
-			Log.e(TAG, "error parsing xml " + e.getMessage());
+			Debugger.e( "error parsing xml " + e.getMessage());
 			//return null;
 			//throw new IOException("error parsing contacts");
 			if (ca != null) {
@@ -159,7 +159,7 @@ public class AuthenticationSession {
 			DocumentBuilder db = dbf.newDocumentBuilder(); //ParserConfigurationException
 			Document document = db.parse(new ByteArrayInputStream(response.body.getBytes())); // SAXException/IOException
 			Node node = document.getFirstChild();
-			//Log.d(TAG, "rootnode name is " + node.getNodeName());
+			//Debugger.d( "rootnode name is " + node.getNodeName());
 			
 			NodeList nl = node.getChildNodes();
 			
@@ -177,7 +177,7 @@ public class AuthenticationSession {
 			}
 			//return pv;
 		} catch (Exception e) {
-			Log.e(TAG, "error parsing xml " + e.getMessage());
+			Debugger.e( "error parsing xml " + e.getMessage());
 			//return null;
 			pv.algorithm = "";
 			pv.type = "";

@@ -1,7 +1,5 @@
 package com.saturdaycoder.easyfetion;
-import java.text.*;
-import android.util.Log;
-import java.lang.System;
+
 import android.database.Cursor;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -101,7 +99,7 @@ public class SmsDbAdapter
 		//debug
 		//int count = cursor.getColumnCount();
 		//for (int i = 0; i < count; ++i) {
-		//	Log.v(TAG, "column[" + i + "]=" + cursor.getColumnName(i));
+		//	Debugger.v( "column[" + i + "]=" + cursor.getColumnName(i));
 		//}
 		//debug
 		
@@ -145,7 +143,7 @@ public class SmsDbAdapter
 		//Uri allsms = Uri.parse("content://sms");
 		
 		Uri inserted = cr.insert(sent, values);
-		Log.d(TAG, "write sms into " + recvno + ": " + inserted.toString());
+		Debugger.d( "write sms into " + recvno + ": " + inserted.toString());
 	}
 	public static void insertReceivedSms(String fromno, long millis, String msg)
 	{	
@@ -169,7 +167,7 @@ public class SmsDbAdapter
 		//Uri allsms = Uri.parse("content://sms");
 		
 		Uri inserted = cr.insert(inbox, values);
-		Log.d(TAG, "write sms into " + fromno + ": " + inserted.toString());
+		Debugger.d( "write sms into " + fromno + ": " + inserted.toString());
 	}
 	
 }

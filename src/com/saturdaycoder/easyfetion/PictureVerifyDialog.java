@@ -1,5 +1,5 @@
 package com.saturdaycoder.easyfetion;
-import com.saturdaycoder.easyfetion.EasyFetionThread.State;
+//import com.saturdaycoder.easyfetion.EasyFetionThread.State;
 
 import android.app.*;
 import android.content.Intent;
@@ -61,7 +61,7 @@ public class PictureVerifyDialog extends Activity
         
     	//decode pic
     	if (decPicData != null) {
-    		Log.d(TAG, "start decoding pic");
+    		Debugger.d( "start decoding pic");
     		
     		Bitmap bmp = BitmapFactory.decodeByteArray(decPicData, 0, decPicData.length);
     		/*if (bmp == null) {

@@ -1,6 +1,7 @@
 package com.saturdaycoder.easyfetion;
 //import android.content.ContentValues;
 import android.content.Context;
+import java.io.*;
 import java.util.ArrayList;
 import android.database.Cursor;
 //import android.database.SQLException;
@@ -10,7 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 public class FetionDatabase extends SQLiteOpenHelper  
 {
-	private static final String TAG="EasyFetion";
+	
 	private static final String DATABASE_NAME = "userdb";
 	private static final int DB_VERSION = 1;
 	private static final boolean encryptUserPasswd = true;
@@ -39,10 +40,10 @@ public class FetionDatabase extends SQLiteOpenHelper
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		Log.d(TAG, "FetionDatabase onCreate");
-		db.execSQL("CREATE TABLE contacts (uri TEXT primary key, "
+		Debugger.d( "FetionDatabase onCreate");
+		db.execSQL("CREATE TABLE contacts (uri TEXT DEFAULT '', "
 				+ " version TEXT DEFAULT '', "
-				+ " sid TEXT DEFAULT '', "
+				+ " sid TEXT primary key, "
 				+ " mobile_no TEXT DEFAULT '', "
 				+ " basic_service_status INTEGER DEFAULT -1, "
 				+ " carrier TEXT DEFAULT '', "
@@ -65,6 +66,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 				+ " password TEXT, "
 				+ " userid TEXT, "
 				+ " mobile_number TEXT, "
+				
 				+ " config_servers_version TEXT DEFAULT '', "
 				+ " config_parameters_version TEXT DEFAULT '', "
 				+ " config_hints_version TEXT DEFAULT '', "
@@ -74,14 +76,15 @@ public class FetionDatabase extends SQLiteOpenHelper
 				+ " portrait_servers_path TEXT DEFAULT '', "
 				+ " personal_version TEXT DEFAULT '', "
 				+ " custom_config_version TEXT DEFAULT '', "
-				+ " contact_version TEXT DEFAULT '')");
+				+ " contact_version TEXT DEFAULT '', "
+				+ " ssic TEXT DEFAULT '' )");
 		
 	}
 	
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) 
 	{
-		Log.d(TAG, "FetionDatabase onUpgrade");
+		Debugger.d( "FetionDatabase onUpgrade");
 		//android.util.Log.w("Constants", "Upgrading database, which will destroy all old data");
 		db.execSQL("DROP TABLE IF EXISTS user");
 		db.execSQL("DROP TABLE IF EXISTS contacts");
@@ -96,13 +99,13 @@ public class FetionDatabase extends SQLiteOpenHelper
 	public void setContact(FetionContact contact)
 	{
 		SQLiteDatabase db = this.getWritableDatabase();
-		Cursor cursor = db.rawQuery("select * from contacts where uri='" 
-				+ contact.sipUri +"'", null);
+		Cursor cursor = db.rawQuery("select * from contacts where sid='" 
+				+ contact.userId +"'", null);
 		if (cursor.moveToFirst()) {
-			Log.d(TAG, "update contact " + contact.sipUri);
+			Debugger.d( "update contact " + contact.sipUri);
 			db.execSQL("update contacts set uri='" + contact.sipUri + "',"
 				+ "version='"+contact.version+"',"//+ " version TEXT, "
-				+ "sid='" + contact.sId + "',"//+ " sid TEXT, "
+				+ "sid='" + contact.userId + "',"//+ " sid TEXT, "
 				+ "mobile_no='" + contact.mobileNumber + "',"//+ " mibile_no TEXT, "
 				//+ " basic_service_status INTEGER, "
 				+ "carrier='" + contact.carrier + "',"//+ " carrier TEXT, "
@@ -122,32 +125,45 @@ public class FetionDatabase extends SQLiteOpenHelper
 				//+ " hobby TEXT, "
 				+ "score_level=" + contact.scoreLevel);//+ " score_level INTEGER)");
 				
+
 		}
 		else {
-			Log.d(TAG, "insert contact " + contact.sipUri);
+			Debugger.d( "insert contact " + contact.sipUri);
 			db.execSQL("insert into contacts (uri, version, sid, mobile_no," +
 					"carrier, carrier_status, portrait_crc, name, nickname, gender, birth_date," +
 					"impresa," +
 					"score_level) values('" + contact.sipUri + "', '" + contact.version
-					+ "','" + contact.sId + "','" + contact.mobileNumber + "','"
+					+ "','" + contact.userId + "','" + contact.mobileNumber + "','"
 					+ contact.carrier + "'," + contact.carrierStatus + ",'"
 					+ contact.portraitCrc + "','" + contact.localName + "','"
 					+ contact.nickName + "'," + contact.gender + ",'"
 					+ contact.birthday + "','" + contact.impression + "',"
 					+ contact.scoreLevel + ")");
 		}
+		/*if (!contact.portrait.equals("")) {
+			try{
+				FileWriter fw = new FileWriter("/sdcard/easyfetion/" 
+						+ contact.sId + ".JPG");
+				fw.write(contact.portrait.toCharArray(), 0, contact.portrait.toCharArray().length);
+				fw.flush();
+				fw.close();
+		    } catch(Exception e) {
+		       e.printStackTrace();
+		       //return false;
+		    }
+		}*/
 	}
 	
 	public void removeContact(FetionContact contact)
 	{
 		SQLiteDatabase db = this.getWritableDatabase();
-		db.execSQL("delete from contacts where sid='" + contact.sipUri + "'");
+		db.execSQL("delete from contacts where sid='" + contact.userId + "'");
 	}
 	
 	public boolean hasContactByUri(String sipuri)
 	{
 		SQLiteDatabase db = this.getReadableDatabase();
-		Log.d(TAG, "query contact db for '" + sipuri + "'");
+		Debugger.d( "query contact db for '" + sipuri + "'");
 		Cursor cursor = db.rawQuery("select * from contacts where uri='" + sipuri + "'", null);
 		if (cursor.moveToFirst())
 			return true;
@@ -155,6 +171,48 @@ public class FetionDatabase extends SQLiteOpenHelper
 			return false;
 	}
 	
+	public boolean hasContactByUserId(String sid)
+	{
+		SQLiteDatabase db = this.getReadableDatabase();
+		Debugger.d( "query contact db for '" + sid + "'");
+		Cursor cursor = db.rawQuery("select * from contacts where sid='" + sid + "'", null);
+		if (cursor.moveToFirst())
+			return true;
+		else 
+			return false;
+	}
+	public FetionContact getContactByUserId(String sid)
+	{
+		SQLiteDatabase db = this.getReadableDatabase();
+		Cursor cursor = db.rawQuery("select * from contacts where sid='" + sid + "'", null);
+		if (cursor.moveToFirst())
+		{
+			FetionContact c = new FetionContact();
+			c.sipUri = cursor.getString(0); //uri TEXT primary key, "
+			c.version = cursor.getString(1);//+ " version TEXT, "
+			c.userId = cursor.getString(2);//+ " sid TEXT, "
+			c.mobileNumber = cursor.getString(3);//+ " mibile_no TEXT, "
+			//+ " basic_service_status INTEGER, "
+			c.carrier = cursor.getString(5);//+ " carrier TEXT, "
+			c.carrierStatus = cursor.getInt(6);//+ " carrier_status INTEGER, "
+			c.portraitCrc = cursor.getString(7);//+ " portrait_crc INTEGER, "
+			c.localName = cursor.getString(8);//+ " name TEXT, "
+			c.nickName = cursor.getString(9);//+ " nickname TEXT, "
+			c.gender = cursor.getInt(10);//+ " gender INTEGER, "
+			c.birthday = cursor.getString(11);//+ " birth_date TIME, "
+			//+ " birthday_valid INTEGER, "
+			c.impression = cursor.getString(13);//+ " impresa TEXT, "
+			//+ " carrier_region TEXT, "
+			//+ " user_region TEXT, "
+			//+ " profile TEXT, "
+			//+ " blood_type INTEGER, "
+			//+ " occupation TEXT, "
+			//+ " hobby TEXT, "
+			c.scoreLevel = cursor.getInt(20);//+ " score_level INTEGER)");
+			return c;
+		}
+		else return null;
+	}
 	public FetionContact getContactByUri(String sipuri)
 	{
 		SQLiteDatabase db = this.getReadableDatabase();
@@ -164,7 +222,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 			FetionContact c = new FetionContact();
 			c.sipUri = cursor.getString(0); //uri TEXT primary key, "
 			c.version = cursor.getString(1);//+ " version TEXT, "
-			c.sId = cursor.getString(2);//+ " sid TEXT, "
+			c.userId = cursor.getString(2);//+ " sid TEXT, "
 			c.mobileNumber = cursor.getString(3);//+ " mibile_no TEXT, "
 			//+ " basic_service_status INTEGER, "
 			c.carrier = cursor.getString(5);//+ " carrier TEXT, "
@@ -205,7 +263,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 				FetionContact c = new FetionContact();
 				c.sipUri = cursor.getString(0); //uri TEXT primary key, "
 				c.version = cursor.getString(1);//+ " version TEXT, "
-				c.sId = cursor.getString(2);//+ " sid TEXT, "
+				c.userId = cursor.getString(2);//+ " sid TEXT, "
 				c.mobileNumber = cursor.getString(3);//+ " mibile_no TEXT, "
 				//+ " basic_service_status INTEGER, "
 				c.carrier = cursor.getString(5);//+ " carrier TEXT, "
@@ -234,7 +292,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 	
 	public void setAccount(SystemConfig sysConfig)
 	{
-		Log.d(TAG, "FetionDatabase setAccount, write account info to db");
+		Debugger.d( "FetionDatabase setAccount, write account info to db");
 		SQLiteDatabase db = this.getWritableDatabase();
 		//db.execSQL("delete from user");
 		String savedPasswd;
@@ -250,14 +308,14 @@ public class FetionDatabase extends SQLiteOpenHelper
 			cursor = db.rawQuery("select * from user where sid<>'" 
 					+ sysConfig.sId + "'", null);
 			if (cursor.moveToFirst()) {
-				Log.d(TAG, "DB DELETE NOT MATCHING ACC");
+				Debugger.d( "DB DELETE NOT MATCHING ACC");
 				db.execSQL("delete from user");
 			}
 			db.execSQL("update user set password='" + savedPasswd + "'"
 					+ ", userId='" + sysConfig.userId + "'"
 					+ ", mobile_number='" + sysConfig.mobileNumber + "'"
 					+ " where sid='" + sysConfig.sId + "'");
-			Log.d(TAG, "DB UPDATE ACC");
+			Debugger.d( "DB UPDATE ACC");
 		}
 		// if not exist, insert new
 		else {
@@ -268,19 +326,19 @@ public class FetionDatabase extends SQLiteOpenHelper
 				+ "'" + sysConfig.mobileNumber + "' " 
 				+ " where not exists (select * from user where sid = '" 
 				+ sysConfig.sId + "')");
-			Log.d(TAG, "INSERT NEW ACC");
+			Debugger.d( "INSERT NEW ACC");
 		}
 	}
 	
 	public void getAccount(SystemConfig sysConfig)
 	{
-		Log.v(TAG, "FetionDatabase getAccount");
+		Debugger.v( "FetionDatabase getAccount");
 		SQLiteDatabase db = this.getWritableDatabase();
 
 		Cursor cursor = db.rawQuery("select * from user", null);
 		String plainPasswd = "";
 
-		Log.v(TAG, "cursor queried");
+		Debugger.v( "cursor queried");
 		if (cursor.moveToFirst()) 
 		{
 			if (encryptUserPasswd) {
@@ -289,19 +347,19 @@ public class FetionDatabase extends SQLiteOpenHelper
 				plainPasswd = cursor.getString(1);
 			}
 			
-			Log.v(TAG, "found existing account: ");
+			Debugger.v( "found existing account: ");
 			
 			//plainPasswd = plainPasswd.substring(plainPasswd.indexOf("Fuck Fetion:") + 12);
 			sysConfig.sId = cursor.getString(0);
 			sysConfig.userPassword = plainPasswd;
 			sysConfig.userId = cursor.getString(2);
 			sysConfig.mobileNumber = cursor.getString(3);
-			Log.v(TAG, "passwd=" + sysConfig.userPassword
+			Debugger.v( "passwd=" + sysConfig.userPassword
 					+ " mobileno=" + sysConfig.mobileNumber);
 		}
 		else 
 		{
-			Log.d(TAG, "found no matching account");
+			Debugger.d( "found no matching account");
 			sysConfig.sId = "";
 			sysConfig.userPassword = "";
 			sysConfig.userId = "";
@@ -311,7 +369,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 	
 	public void getUserInfo (SystemConfig sysConfig)
 	{
-		Log.d(TAG, "EasyFetion getUserInfo");
+		Debugger.d( "EasyFetion getUserInfo");
 		SQLiteDatabase db = this.getReadableDatabase();
 		/*String sel[] = new String[] {
 				"config_servers_version",
@@ -342,6 +400,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 			sysConfig.personalVersion = cursor.getString(11);
 			sysConfig.customConfigVersion = cursor.getString(12);
 			sysConfig.contactVersion = cursor.getString(13);
+			sysConfig.ssic = cursor.getString(14);
 		}
 		else
 		{
@@ -355,6 +414,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 			sysConfig.personalVersion = "";
 			sysConfig.customConfigVersion = "";
 			sysConfig.contactVersion = "";
+			sysConfig.ssic = "";
 		}
 		
 	}
@@ -372,6 +432,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 				+ ", personal_version = '" + sysConfig.personalVersion + "' "
 				+ ", custom_config_version = '" + sysConfig.customConfigVersion + "' "
 				+ ", contact_version = '" + sysConfig.contactVersion + "' "
+				+ ", ssic = '" + sysConfig.ssic + "' "
 				+ " where sid = '" + sysConfig.sId + "'");
 	}
 }

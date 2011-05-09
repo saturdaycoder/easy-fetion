@@ -15,6 +15,7 @@
             android:layout_height="wrap_content"        
             android:layout_width="fill_parent"    
             android:id="@+id/msgListItemBody"      
+            android:layout_below="@+id/msgListItemTime"
             /> 
         <TextView        
             android:text="Message Timestamp"        
@@ -22,7 +23,7 @@
             android:textSize="12dip"        
             android:layout_height="wrap_content"        
             android:layout_width="fill_parent"        
-            android:layout_above="@+id/msgListItemBody"  
+              
             android:id="@+id/msgListItemTime"      
             /> 
  </RelativeLayout>  

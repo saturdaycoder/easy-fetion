@@ -1,31 +1,23 @@
 package com.saturdaycoder.easyfetion;
 import java.io.*;
-import java.net.Socket;
-import java.util.ArrayList;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import java.util.Map;
-import android.util.Log;
 
 public class AuthenticationSession {
-	private static final String TAG = "EasyFetion";
 	Crypto crypto;
 	SystemConfig sysConfig;
-	//Socket socket;
+
 	InputStream is;
 	OutputStream os;
 	public SipcResponse response;
 	//public FetionPictureVerification verification;
-	
-	
-	
+		
 	public AuthenticationSession(SystemConfig sysConfig, Crypto crypto, 
-			InputStream is, OutputStream os)//Socket socket)
+			InputStream is, OutputStream os)
 			throws IOException
 	{
 		this.sysConfig = sysConfig;
@@ -54,7 +46,13 @@ public class AuthenticationSession {
 	public void postprocessJunk()
 	{
 		SipcMessageParser parser = new SipcMessageParser();
-		SipcMessage msg = (SipcMessage)parser.parse(is);
+		try {
+			SipcMessage msg = (SipcMessage)parser.parse(is);
+			Debugger.d(msg.toString());
+		} catch (Exception e) {
+			Debugger.e("error process junk: " + e.getMessage());
+		}
+		
 	}
 	
 	public void postprocessContacts(Map<String, FetionContact> ca)

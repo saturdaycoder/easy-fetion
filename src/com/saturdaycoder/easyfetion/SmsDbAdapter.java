@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class SmsDbAdapter
 {
 	private static ContentResolver cr = null;
-	private static final String TAG = "EasyFetion";
+
 	//private Cursor cursor;
 	
 	private static int _id_index = -1;
@@ -95,13 +95,6 @@ public class SmsDbAdapter
 		String sortOrder = "date asc";
 		Cursor cursor = cr.query(Uri.parse("content://sms"), 
 				projection, selection, selectionArgs, sortOrder);
-		
-		//debug
-		//int count = cursor.getColumnCount();
-		//for (int i = 0; i < count; ++i) {
-		//	Debugger.v( "column[" + i + "]=" + cursor.getColumnName(i));
-		//}
-		//debug
 		
 		if (cursor.moveToFirst()) {
 			while (!cursor.isAfterLast()) {

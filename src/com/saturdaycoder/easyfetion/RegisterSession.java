@@ -1,7 +1,7 @@
 package com.saturdaycoder.easyfetion;
-import java.net.*;
+
 import java.io.*;
-import android.util.Log;
+
 public class RegisterSession {
 	private SystemConfig sysConfig;
 	private Crypto crypto;
@@ -10,7 +10,6 @@ public class RegisterSession {
 	private OutputStream os;
 	public SipcResponse response;
 	
-	private static final String TAG = "EasyFetion";
 	
 	public RegisterSession(SystemConfig sysConfig, Crypto crypto,InputStream is,
 			OutputStream os)//Socket sipcSocket)

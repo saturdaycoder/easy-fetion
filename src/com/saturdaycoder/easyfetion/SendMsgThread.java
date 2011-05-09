@@ -2,21 +2,15 @@ package com.saturdaycoder.easyfetion;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
 import java.util.Date;
-
-import com.saturdaycoder.easyfetion.LoginThread.State;
-
-//import com.saturdaycoder.easyfetion.RefreshThread.State;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.format.DateFormat;
-import android.util.Log;
+
 
 public class SendMsgThread extends Thread{
-	private static final String TAG = "EasyFetion";
+
 
     public SystemConfig sysConfig;
     private Crypto crypto;
@@ -35,7 +29,7 @@ public class SendMsgThread extends Thread{
     }
     public void addCommand(Command cmd, Object obj) {
     	Message msg = mHandler.obtainMessage();
-    	ThreadCommand tc = new ThreadCommand();//obj;
+    	ThreadCommand tc = new ThreadCommand();
     	tc.cmd = cmd;
     	tc.arg = obj;
     	msg.obj = tc;

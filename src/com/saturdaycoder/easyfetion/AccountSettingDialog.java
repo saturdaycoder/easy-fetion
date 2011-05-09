@@ -11,7 +11,6 @@ public class AccountSettingDialog extends Activity
 	private EditText editMobileno;
 	private EditText editPasswd;
 	private Button btnOk;
-	private Button btnCancel;
 	
 	private Intent intent;
 	private Bundle bundle;
@@ -26,7 +25,6 @@ public class AccountSettingDialog extends Activity
 		editMobileno = (EditText)findViewById(R.id.editAcc);
 		editPasswd = (EditText)findViewById(R.id.editAccPasswd);
 		btnOk = (Button)findViewById(R.id.btnConfirmAccountSetting);
-		//btnCancel = (Button)findViewById(R.id.btnCancelAccountSetting);
 		intent = this.getIntent();
 		bundle = intent.getExtras();
 		String lastLogin = bundle.getString("lastlogin");
@@ -72,16 +70,7 @@ public class AccountSettingDialog extends Activity
 				}
 			}
 		});
-	/*	btnCancel.setOnClickListener(new Button.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Bundle b = new Bundle();
 
-				intent.putExtras(b);
-				AccountSettingDialog.this.setResult(RESULT_CANCELED, intent);
-				AccountSettingDialog.this.finish();
-			}
-		});*/
 	}
 	
 	@Override
@@ -109,14 +98,14 @@ public class AccountSettingDialog extends Activity
     }
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent msg) {
-		//Debugger.v( "ACCSET onDestroy");
+
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			Bundle b = new Bundle();
 	
 			intent.putExtras(b);
 			AccountSettingDialog.this.setResult(RESULT_CANCELED, intent);
 			AccountSettingDialog.this.finish();
-			//super.onDestroy();
+
 			return true;
 		}
 		else {

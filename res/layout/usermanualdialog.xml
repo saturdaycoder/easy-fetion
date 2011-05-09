@@ -12,7 +12,7 @@
     android:layout_height="wrap_content"
     />
 <Button 
-    android:gravity="center" 
+    android:layout_centerHorizontal="true"
     android:layout_height="wrap_content" 
     android:text="我知道了" 
     android:id="@+id/button1" 

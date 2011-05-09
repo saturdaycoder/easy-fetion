@@ -8,15 +8,11 @@ import java.util.Map;
 
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
-import com.saturdaycoder.easyfetion.LoginThread.Command;
-import com.saturdaycoder.easyfetion.LoginThread.State;
-import com.saturdaycoder.easyfetion.LoginThread.ThreadCommand;
 import java.io.IOException;
 
 public class RefreshThread extends Thread{
-	private static final String TAG = "EasyFetion";
+
 	private SystemConfig sysConfig;
 	private Handler uiHandler;
 	private Crypto crypto;

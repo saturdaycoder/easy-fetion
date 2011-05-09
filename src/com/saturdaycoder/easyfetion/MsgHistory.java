@@ -14,17 +14,14 @@ import android.widget.Toast;
 import android.text.format.DateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import android.telephony.gsm.SmsMessage;
 import android.content.IntentFilter;
 import android.os.Vibrator;
-
 import com.saturdaycoder.easyfetion.SendMsgThread.Command;
 
-import android.util.Log;
+
 public class MsgHistory extends Activity
 {
-	private static final String TAG="EasyFetion";
 	private Intent intent;
 	private Bundle bundle;
 	private SmsReceiver receiver;
@@ -233,12 +230,14 @@ public class MsgHistory extends Activity
 
 		smsList = SmsDbAdapter.getSmsList(mobileno);
 		ArrayList<HashMap<String, Object>> listItem = new ArrayList<HashMap<String, Object>>(); 
+		ArrayList<Integer> backcolor = new ArrayList<Integer>();
+		ArrayList<Integer> frontcolor = new ArrayList<Integer>();
 		for (int i = 0; i < smsList.size(); ++i) {
 			int type = smsList.get(i).type;
 			long date = smsList.get(i).date;
 			String body = smsList.get(i).body;
 			
-			String smstext = ((type == 1)? "": "Me: " )
+			String smstext = ((type == 1)? "<0>": "<1>我: " )
 					+body;
 			String timetext = DateFormat.format("yy-MM-dd kk:mm:ss", date).toString();
 			
@@ -247,9 +246,15 @@ public class MsgHistory extends Activity
 		    map.put("MsgText", smstext); 
 		    map.put("TimeText", timetext); 
 		    listItem.add(map); 
+		    frontcolor.add(0x00000000);
+		    backcolor.add((type == 1)? 0x008080FF: 0x00FFFFFF);
 		} 
-		SimpleAdapter listItemAdapter = new SimpleAdapter(MsgHistory.this,
+		MsgListAdapter listItemAdapter = new MsgListAdapter(MsgHistory.this,
 			listItem,
+			
+			frontcolor,
+			backcolor,
+			
 		    R.layout.msglistitem,
 		            
 		    new String[] {
@@ -276,7 +281,7 @@ public class MsgHistory extends Activity
 			{
 				Debugger.d( "SmsReceiver.onReceive SMS_RECEIVED");
 				
-				StringBuilder sb = new StringBuilder();
+				//StringBuilder sb = new StringBuilder();
 				
 				Bundle bundle = intent.getExtras();
 				

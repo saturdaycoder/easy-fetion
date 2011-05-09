@@ -4,18 +4,14 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-import android.util.Log;
 
 public class FetionPictureVerification 
 {
-	private static final String TAG = "EasyFetion";
 	public String guid = "";
 	public String algorithm = "";
 	public String type = "";
@@ -23,6 +19,17 @@ public class FetionPictureVerification
 	public String text = "";
 	public String tips = "";
 	private String pic_base64 = "";
+	
+	public void clear() {
+		guid = "";
+		algorithm = "";
+		type = "";
+		code = "";
+		text = "";
+		tips = "";
+		pic_base64 = "";
+	}
+	
 	//private SystemConfig sysConfig;
 	public FetionPictureVerification(/*SystemConfig sc*/) 
 	{
@@ -50,7 +57,7 @@ public class FetionPictureVerification
 			int total_len = 0;
 			int header_len = -1;
 			String response = "";
-			byte respBytes[] = null;
+			//byte respBytes[] = null;
 			do 
 			{
 				int len = is.read(output);

@@ -1,14 +1,13 @@
 package com.saturdaycoder.easyfetion;
 //import android.content.ContentValues;
 import android.content.Context;
-import java.io.*;
 import java.util.ArrayList;
 import android.database.Cursor;
 //import android.database.SQLException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteDatabase;
 //import android.hardware.SensorManager;
-import android.util.Log;
+
 public class FetionDatabase extends SQLiteOpenHelper  
 {
 	

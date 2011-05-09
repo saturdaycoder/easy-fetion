@@ -8,7 +8,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.widget.ImageView;
-import android.util.Log;
 import android.os.Bundle;
 import android.os.Message;
 import android.widget.Toast;
@@ -24,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import com.saturdaycoder.easyfetion.LoginThread.Command;
+
 import android.os.Handler;
 import android.content.res.*;
 import android.content.*;
@@ -76,10 +78,7 @@ public class EasyFetion extends Activity
         Toast.makeText(EasyFetion.this, msg,
                 Toast.LENGTH_LONG).show();
     }
-    private void statusbarNotify(String msg)
-    {
-    	
-    }
+
 
     private class RefreshUiHandler extends Handler {
         
@@ -184,18 +183,21 @@ public class EasyFetion extends Activity
 			case LOGIN_FAIL: 
 				dismissDialog(INTENT_ACC_SET_DIALOG);
 				showerr(TAG, "Login failed. input your account again");
+				if (loginThread.isAlive()) {
+					loginThread.stop();
+				}
 				break;
 			case LOGIN_SUCC: 
 				FetionDatabase.getInstance().setAccount(sysConfig);
 				FetionDatabase.getInstance().clearContacts();
+				if (!loginThread.isAlive()) {
+					loginThread.start();
+				}
+	    		loginThread.addCommand(Command.DOWNLOAD_CONFIG);
 				break;	
-			case CONFIG_DOWNLOADING:
-				break;
 			case CONFIG_DOWNLOAD_SUCC:
 				dismissDialog(INTENT_ACC_SET_DIALOG);
 				FetionDatabase.getInstance().setUserInfo(sysConfig);
-				
-    			
 				showerr(TAG, "Congratulations! Your ass is mine!!");
 				
 				showDialog(DIALOG_REFRESH_PROGRESS);
@@ -208,6 +210,11 @@ public class EasyFetion extends Activity
 				break;
 			case CONFIG_DOWNLOAD_FAIL:
 				break;
+			case NETWORK_DOWN:
+				showerr(TAG, "Network error!!");
+				if (loginThread.isAlive()) {
+					loginThread.stop();
+				}
 			}
 			
 		}
@@ -245,6 +252,10 @@ public class EasyFetion extends Activity
         loginUiHandler = new LoginUiHandler();
         contactList = new LinkedHashMap<String, FetionContact>();
         crypto = Crypto.getInstance();
+        
+        loginThread = new LoginThread(sysConfig, loginUiHandler);
+        refreshThread = new RefreshThread(sysConfig, crypto,
+				contactList, refreshUiHandler);
 
         lvContacts.setOnItemClickListener(new OnItemClickListener() {
         	@Override
@@ -302,9 +313,10 @@ public class EasyFetion extends Activity
 	
 	    		showDialog(DIALOG_LOGIN_PROGRESS);
 	    		
-				loginThread = new LoginThread(sysConfig, loginUiHandler);
-				loginThread.start();
-	    		
+				if (!loginThread.isAlive()) {
+					loginThread.start();
+				}
+				loginThread.addCommand(Command.LOGIN);
 	    		Debugger.v( "Dialog created and returned");
     		}
     		else {
@@ -319,14 +331,16 @@ public class EasyFetion extends Activity
     			case RESULT_OK: {
 		    		Bundle bundle = data.getExtras();
 		    		loginThread.verification.code = bundle.getString("code"); 
-		    		synchronized(loginThread) {
-		    			loginThread.notify();
-		    		}
+					if (!loginThread.isAlive()) {
+						loginThread.start();
+					}
+		    		loginThread.addCommand(Command.LOGIN);
 		    		break;
     			}
 		    	default:
 		    		Debugger.e( "pic verify destroyed");
-		    		loginThread.stop();
+		    		if (loginThread.isAlive())
+		    			loginThread.stop();
 		    		break;
     			}
     		}
@@ -595,8 +609,8 @@ public class EasyFetion extends Activity
                 @Override 
                 public void onDismiss(DialogInterface dialog) { 
                 	showerr(TAG, "login is canceled");
-                	if (loginThread != null)
-                		loginThread.stop();
+                	//if (loginThread != null)
+                	loginThread.stop();
                 } 
             }); 
             break;

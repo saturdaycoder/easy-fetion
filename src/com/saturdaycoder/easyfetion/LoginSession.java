@@ -8,14 +8,10 @@ import org.xml.sax.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import javax.xml.parsers.*;
-import android.util.Log;
-
 import java.io.*;
 public class LoginSession {
-	private static final String TAG = "EasyFetion";
+
 	
 	public FetionHttpResponse response;
 	private SystemConfig sysConfig;
@@ -27,18 +23,17 @@ public class LoginSession {
 	{
 		this.sysConfig = sysConfig;
 		SSLSocketFactory sslsf = (SSLSocketFactory)SSLSocketFactory.getDefault();
-		//socket = (SSLSocket)sslsf.createSocket(SystemConfig.ssiHostName, 443);	
-		SSLSocket socket = (SSLSocket)sslsf.createSocket(SystemConfig.ssiHostIp, 443);
+		socket = (SSLSocket)sslsf.createSocket(SystemConfig.ssiHostIp, 443);
 		os = socket.getOutputStream();
 		is = socket.getInputStream();
 	}
 	
-	public void close() 
+	public void close()// throws IOException 
 	{
 		try {
 			socket.close();
 		} catch (Exception e) {
-			
+			Debugger.e("error closing SSI connection: " + e.getMessage());
 		}
 	}
 	
@@ -51,7 +46,8 @@ public class LoginSession {
 		Debugger.d( "sending login request: " + loginRequest.toString());
 		os.write(loginRequest.toString().getBytes());
 	}
-	public void read() {
+	public void read() throws IOException 
+	{
 		FetionHttpMessageParser parser = new FetionHttpMessageParser();
 		response = (FetionHttpResponse)parser.parse(is);
 	}
@@ -72,11 +68,8 @@ public class LoginSession {
 		
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance(); 
 		DocumentBuilder db = dbf.newDocumentBuilder(); 
-		Document document = db.parse(new ByteArrayInputStream(response.body.getBytes())); // SAXException/IOException
+		Document document = db.parse(new ByteArrayInputStream(response.body.getBytes()));
 		Node nodeRes = document.getFirstChild();
-		NamedNodeMap nnm = nodeRes.getAttributes();
-		Node n = nnm.item(0);
-	
 		Node nodeUser = nodeRes.getFirstChild();
 		NamedNodeMap nnmUser = nodeUser.getAttributes();
 		Node nodeSid = nnmUser.getNamedItem("uri");
@@ -96,7 +89,6 @@ public class LoginSession {
 			DocumentBuilder db = dbf.newDocumentBuilder(); //ParserConfigurationException
 			Document document = db.parse(new ByteArrayInputStream(response.body.getBytes())); // SAXException/IOException
 			Node node = document.getFirstChild();
-			//Debugger.d( "rootnode name is " + node.getNodeName());
 			
 			Node vn = node.getFirstChild();
 			pv.algorithm = vn.getAttributes().getNamedItem("algorithm").getNodeValue();
@@ -105,7 +97,6 @@ public class LoginSession {
 			pv.tips = vn.getAttributes().getNamedItem("tips").getNodeValue();
 		} catch (Exception e) {
 			Debugger.e( "error parsing xml " + e.getMessage());
-			//return null;
 			pv.algorithm = "";
 			pv.type = "";
 			pv.guid = "";

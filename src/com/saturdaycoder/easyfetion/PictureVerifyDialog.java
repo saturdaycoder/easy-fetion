@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.widget.TextView;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
@@ -16,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.Toast;
 public class PictureVerifyDialog extends Activity
 {
-	private static final String TAG="EasyFetion";
 	
 	Button btnAuth;
 	EditText editCode;

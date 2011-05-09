@@ -1,5 +1,5 @@
 package com.saturdaycoder.easyfetion;
-import java.io.*;
+
 
 public class SipcResponse extends SipcMessage{
     protected final static String SIPC_RESPONSE_CODE_INVITE_TRYING = "100";

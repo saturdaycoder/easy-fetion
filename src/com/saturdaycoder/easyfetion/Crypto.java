@@ -4,15 +4,8 @@ import java.security.spec.*;
 import java.util.ArrayList;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-
-//import android.util.Base64;
-import android.util.Log;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import javax.crypto.*;
 import java.security.interfaces.RSAPublicKey;
-import java.security.interfaces.RSAPrivateCrtKey;
 import java.math.BigInteger;
 
 public class Crypto {
@@ -22,7 +15,6 @@ public class Crypto {
 	public String cnonce = "";
 	public String aeskey = "";
 	
-	private static String TAG = "EasyFetion";
 	
 	private static class Base64
 	{

@@ -4,14 +4,12 @@ import java.lang.IllegalAccessException;
 import java.net.*;
 import android.app.*;
 import android.net.wifi.*;
-import android.util.Log;
 import android.content.*;
 import java.io.IOException;
 import java.io.*;
 import android.telephony.*;
 public class Network {
 
-	private static final String TAG="EasyFetion";
 	private static Activity activity;
 	
 	private static Socket sipcSocket = null;

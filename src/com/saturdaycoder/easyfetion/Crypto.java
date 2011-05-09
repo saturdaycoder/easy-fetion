@@ -193,12 +193,12 @@ public class Crypto {
 	public char[] computeResponse(String userId, String password)
 	{
 		String psdhex = new String(Crypto.getHashedPassword(userId, password));
-		//Log.d(TAG, "auth hashpasswd = \"" + psdhex + "\"");
+		//Debugger.d( "auth hashpasswd = \"" + psdhex + "\"");
 		
 		String modulus = key.substring(0, 256);
-		//Log.d(TAG, "modulus = " + modulus);
+		//Debugger.d( "modulus = " + modulus);
 		String exponent = key.substring(256, 262);
-		//Log.d(TAG, "exponent = " + exponent);
+		//Debugger.d( "exponent = " + exponent);
 		
 		byte bpsdhex[] = ascii2hex(psdhex.toCharArray());
 		byte baeskey[] = ascii2hex(aeskey.toCharArray());
@@ -222,7 +222,7 @@ public class Crypto {
 		    return hex2ascii(encryptedData);
 
 		} catch (Exception e) {
-			Log.e(TAG, "error encrypting data, " + e.getCause().toString() +" " + e.getMessage());
+			Debugger.e( "error encrypting data, " + e.getCause().toString() +" " + e.getMessage());
 			return null;
 		}
 
@@ -299,12 +299,12 @@ public class Crypto {
     	
     	/*for (int j = 0; j <bubid.length; ++j)
     	{
-    		Log.e(TAG, "bubid[" + j + "] = " + bubid[j]);
+    		Debugger.e( "bubid[" + j + "] = " + bubid[j]);
     	}
     	
     	for (int k = 0; k < bpsd.length; ++k)
     	{
-    		Log.e(TAG, "bpsd[" + k + "] = " + bpsd[k]);
+    		Debugger.e( "bpsd[" + k + "] = " + bpsd[k]);
     	}
     	*/
     	return hashPasswordV1(bubid, bpsd);

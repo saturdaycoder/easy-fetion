@@ -106,7 +106,7 @@ public class SendMsgThread extends Thread{
     	        
     	        //Socket sipcSocket = null;
     	        
-    	        Log.d(TAG, "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
+    	        Debugger.d( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
     	        
     	        InputStream is = null;
     	        OutputStream os = null;
@@ -115,7 +115,7 @@ public class SendMsgThread extends Thread{
     	        	Network.closeSipcSocket();
     	        	Network.createSipcSocket(sysConfig.sipcProxyIp, sysConfig.sipcProxyPort);
     	        } catch (Exception e) {
-    	        	Log.e(TAG, "error re-create sipc socket");
+    	        	Debugger.e( "error re-create sipc socket");
     	        	notifyState(State.NETWORK_ERROR, fm);
     	        	return;
     	        }
@@ -125,7 +125,7 @@ public class SendMsgThread extends Thread{
     	        	is = Network.getSipcInputStream();
     	        	os = Network.getSipcOutputStream();
     	        } catch (Exception e) {
-    	        	Log.e(TAG, "network error in: " + e.getMessage());
+    	        	Debugger.e( "network error in: " + e.getMessage());
     	        	notifyState(State.NETWORK_ERROR, null);
     	        	return;
     	        }
@@ -150,7 +150,7 @@ public class SendMsgThread extends Thread{
     	            }
     	        } catch (Exception e) {
     	        	if (null != reg) {
-    	        		Log.e(TAG, "error in register session: " + e.getMessage());
+    	        		Debugger.e( "error in register session: " + e.getMessage());
     	        		notifyState(State.REGISTER_FAIL, fm);
     	        		return;
     	        	}
@@ -176,7 +176,7 @@ public class SendMsgThread extends Thread{
     		            switch(statuscode) {
     		            case 200:
     		            	//auth.postprocessContacts(null);
-    		            	Log.d(TAG, "Process a junk");
+    		            	Debugger.d( "Process a junk");
     		            	auth.postprocessJunk();
     		            	retry = false;
     		            	break;
@@ -185,10 +185,10 @@ public class SendMsgThread extends Thread{
     		            	auth.postprocessVerification(verification);
     		            	notifyState(State.AUTHENTICATE_NEED_CONFIRM, fm);
     		            	synchronized(this) {
-    		            		Log.d(TAG, "thread is sleeping");
+    		            		Debugger.d( "thread is sleeping");
     		                	wait();
     		                }
-    		            	Log.d(TAG, "thread is awaken");
+    		            	Debugger.d( "thread is awaken");
     		            	retry = true;
     		            	break;
     		            default:
@@ -199,7 +199,7 @@ public class SendMsgThread extends Thread{
     		            }
     		        } catch (Exception e) {
     		        	if (null != auth) {
-    		        		Log.e(TAG, "error in authenticate session: " + e.getMessage());
+    		        		Debugger.e( "error in authenticate session: " + e.getMessage());
     		        		notifyState(State.AUTHENTICATE_FAIL, fm);
     		        		retry = false;
     		        		return;
@@ -215,9 +215,9 @@ public class SendMsgThread extends Thread{
     				SipcCommand sendMsgCmd = new SipcSendMsgCommand(sysConfig.sId, 
     						fm.contact.sipUri, fm.msg);
     				os.write(sendMsgCmd.toString().getBytes());
-    				Log.d(TAG, "Sent command: " + sendMsgCmd.toString());
+    				Debugger.d( "Sent command: " + sendMsgCmd.toString());
     			} catch (Exception e) {
-    				Log.e(TAG, "sending command failed");
+    				Debugger.e( "sending command failed");
     				notifyState(State.NETWORK_ERROR, fm);
     				return;
     			}
@@ -228,22 +228,22 @@ public class SendMsgThread extends Thread{
     				m = (SipcResponse)parser.parse(is);
     			}catch (Exception e) {
     				
-    				Log.e(TAG, "send online msg command failed:" + e.getMessage());
+    				Debugger.e( "send online msg command failed:" + e.getMessage());
     				
     				notifyState(State.NETWORK_ERROR, fm);
     				
     			}
 				if (m == null) {
-					Log.e(TAG, "got an mal-formated message");
+					Debugger.e( "got an mal-formated message");
 				}
 				else if (m.getResponseCode() == 200) {
-					Log.d(TAG, "succeeded sending msg: " + m.toString());
+					Debugger.d( "succeeded sending msg: " + m.toString());
     				
 					long date = System.currentTimeMillis();
 					String strd = m.getHeaderValue("D");
 					if (strd != null) {
 						date = Date.parse(strd);
-						Log.d(TAG, "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
+						Debugger.d( "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
 					}
 					
 					
@@ -254,12 +254,12 @@ public class SendMsgThread extends Thread{
 	        		
 				}
 				else if (m.getResponseCode() == 280) {
-					Log.d(TAG, "succeeded sending msg by SMS: " + m.toString());
+					Debugger.d( "succeeded sending msg by SMS: " + m.toString());
 					long date = System.currentTimeMillis();
 					String strd = m.getHeaderValue("D");
 					if (strd != null) {
 						date = Date.parse(strd);
-						Log.d(TAG, "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
+						Debugger.d( "received date is " + DateFormat.format("yyyy-MM-dd kk:mm:ss", date));
 					}
 	        		// write the sent message to sms database
 	        		SmsDbAdapter.insertSentSms(fm.contact.getSmsNumber(),
@@ -269,37 +269,38 @@ public class SendMsgThread extends Thread{
 				}
 				else {
 					notifyState(State.MSG_FAILED, fm);
-					Log.d(TAG, "sending msg failed: errno=" + m.getResponseCode());
+					Debugger.d( "sending msg failed: errno=" + m.getResponseCode());
 					
 				}
    	        
     			
     			// send drop
-    	        boolean dretry = false;
-    	        do {
+    	        boolean dretry = true;
+    	        //do {
     		        SipcDropCommand cmd = new SipcDropCommand(sysConfig.sId);
     		        try {
-    		        	Log.d(TAG, "send drop command: " + cmd.toString());
+    		        	Debugger.d( "send drop command: " + cmd.toString());
     					os.write(cmd.toString().getBytes());
+    					dretry = false;
     					SipcResponse res = (SipcResponse)parser.parse(is);
     					if (res == null) {
-    						dretry = true;
-    						continue;
+    						
+    						//continue;
     					}
-    					Log.d(TAG, "received response: " + res.toString());
+    					Debugger.d( "received response: " + res.toString());
     					if (res.getResponseCode() == 200) {
-    						dretry = false;
-    						break;
+    						
+    						//break;
     					}
     					else {
-    						dretry = true;
-    						continue;
+    						
+    						//continue;
     					}
     		        } catch (IOException e) {
-    		        	dretry = true;
-    					continue;
+    		        	Debugger.e( "drop error: " + e.getMessage());
+    					//continue;
     		        }
-    	        } while (dretry);
+    	        //} while (dretry);
     	        
     	        try {
     	        	Network.closeSipcSocket();

@@ -26,7 +26,7 @@ public class RegisterSession {
 	{
 		SipcRegisterCommand regMsg = new SipcRegisterCommand(sysConfig.sId,
 				crypto.cnonce, SystemConfig.protocolVersion);
-		Log.d(TAG, "sent: " + regMsg.toString());
+		Debugger.d( "sent: " + regMsg.toString());
 		os.write(regMsg.toString().getBytes());
 	}
 	
@@ -34,7 +34,7 @@ public class RegisterSession {
 	{
 		SipcMessageParser parser = new SipcMessageParser();
 		this.response = (SipcResponse)parser.parse(is);
-		Log.d(TAG, "received: " + response.toString());
+		Debugger.d( "received: " + response.toString());
 	}
 	
 	public void postprocess()
@@ -50,8 +50,8 @@ public class RegisterSession {
 		String strsignature = str.substring(str.indexOf("signature=\"") + 7);
 		this.crypto.signature = strsignature.substring(0, strsignature.indexOf('\"'));
 		
-		Log.d(TAG, "nonce = \"" + this.crypto.nonce + "\"");
-		Log.d(TAG, "key = \"" + this.crypto.key + "\"");
-		Log.d(TAG, "signature = \"" + this.crypto.signature + "\"");
+		Debugger.d( "nonce = \"" + this.crypto.nonce + "\"");
+		Debugger.d( "key = \"" + this.crypto.key + "\"");
+		Debugger.d( "signature = \"" + this.crypto.signature + "\"");
 	}
 }

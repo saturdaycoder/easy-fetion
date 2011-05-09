@@ -18,7 +18,7 @@ public class SipcMessageParser extends SocketMessageParser
 		try {
 			boolean reparse = false;
 			len = is.read(output);
-			Log.d(TAG, "read: " + len);
+			Debugger.d( "read: " + len);
 			str = new String(output, 0, len);
 			SipcMessage resp1 = (SipcMessage)this.parse(str);
 			String headerL = resp1.getHeaderValue("L");
@@ -30,7 +30,7 @@ public class SipcMessageParser extends SocketMessageParser
 			
 						
 			int totallen = Integer.parseInt(headerL);
-			Log.d(TAG, "response length=" + totallen);
+			Debugger.d( "response length=" + totallen);
 			int headerlen = str.indexOf("\r\n\r\n") + 4;
 			
 			while (len < totallen + headerlen) {
@@ -51,10 +51,10 @@ public class SipcMessageParser extends SocketMessageParser
 				return resp1;
 			}
 		} catch (IOException e) {
-			Log.e(TAG, "error parsing input stream: " + e.getMessage());
+			Debugger.e( "error parsing input stream: " + e.getMessage());
 			return null;
 		}catch (NumberFormatException e) {
-			Log.e(TAG, "error parsing integer: " + e.getMessage());
+			Debugger.e( "error parsing integer: " + e.getMessage());
 			return null;
 		}
 

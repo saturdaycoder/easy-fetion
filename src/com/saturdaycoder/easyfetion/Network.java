@@ -28,10 +28,31 @@ public class Network {
 			throw new IOException ("SIPC not connected");
 		return sipcSocket;
 	}
+	public static String encodeUril(String original) {
+		//478     if(pos == '/')
+			//479       strcat(res , "%2f");
+		String encoded = original;
+		encoded = encoded.replace("/", "%2f").replace("@", "%40").replace("=", "%3d");
+		encoded = encoded.replace(":", "%3a").replace(";", "%3b").replace("+", "%2b");
+		return encoded;
+			//480     else if(pos == '@')
+			//481       strcat(res , "%40");
+		
+			//482     else if(pos == '=')
+			//483       strcat(res , "%3d");
+			//484     else if(pos == ':')
+			//485       strcat(res , "%3a");
+			//486     else if(pos == ';')
+			//487       strcat(res , "%3b");
+			//488     else if(pos == '+'){
+			//489       strcat(res , "%2b");
+
+	}
+	
 	public static void createSipcSocket(String ip, int port) throws IOException
 	{
 		
-		Log.d(TAG, "SIPC socket is CREATED");
+		Debugger.d( "SIPC socket is CREATED");
 		
 		if (sipcSocket == null) {
 			sipcSocket = new Socket(ip, port);
@@ -51,7 +72,7 @@ public class Network {
 	}
 	public static void closeSipcSocket() throws IOException 
 	{
-		Log.d(TAG, "SIPC socket is CLOSED");
+		Debugger.d( "SIPC socket is CLOSED");
 		if (sipcSocket != null) {
 			sipcSocket.close();
 			sipcSocket = null;

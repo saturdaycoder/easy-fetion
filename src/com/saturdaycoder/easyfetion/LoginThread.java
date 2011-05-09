@@ -1,7 +1,4 @@
 package com.saturdaycoder.easyfetion;
-
-import com.saturdaycoder.easyfetion.EasyFetionThread.State;
-
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -32,6 +29,8 @@ public class LoginThread extends Thread {
     	NETWORK_DOWN,
     }
     public enum Command {
+    	LOGIN,
+    	DOWNLOAD,
     	EXIT,
     }
     public class ThreadCommand {
@@ -70,6 +69,9 @@ public class LoginThread extends Thread {
 		verification  = new FetionPictureVerification();
 	}
 	
+	private class WorkHandler extends Handler {
+		
+	}
 	
 	
 	@Override

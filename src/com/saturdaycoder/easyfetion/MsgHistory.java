@@ -71,7 +71,7 @@ public class MsgHistory extends Activity
 		
 		if (mobileno == null || nickname == null) {
 			
-			Log.d(TAG, "can't get correct parameter");
+			Debugger.d( "can't get correct parameter");
 			
 			return;
 		}
@@ -101,7 +101,7 @@ public class MsgHistory extends Activity
         public void handleMessage(Message msg) 
 		{
 			SendMsgThread.ThreadState ss = (SendMsgThread.ThreadState)msg.obj;
-			Log.d(TAG, "sendmsgthread reports " + ss.state.toString());
+			Debugger.d( "sendmsgthread reports " + ss.state.toString());
 			switch (ss.state) {
 			case AUTHENTICATE_NEED_CONFIRM:
 				Intent intent = new Intent();
@@ -171,26 +171,26 @@ public class MsgHistory extends Activity
 	@Override
 	protected void onStop() {
     	unregisterReceiver(receiver);
-    	Log.d(TAG, "RECEIVER UNREGISTERED");
+    	Debugger.d( "RECEIVER UNREGISTERED");
     	super.onStop();
 	}
 	@Override
 	protected void onStart() {
 		super.onStart();
 		crypto = Crypto.getInstance();
-		Log.d(TAG, "loading sms list of " + mobileno);
+		Debugger.d( "loading sms list of " + mobileno);
 		
     	IntentFilter filter = new IntentFilter();
     	filter.addAction("android.provider.Telephony.SMS_RECEIVED");
     	filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
     	registerReceiver(receiver, filter);
-    	Log.d(TAG, "RECEIVER REGISTERED");
+    	Debugger.d( "RECEIVER REGISTERED");
 		
 		
 		loadMsgList();
 		uiHandler = new SendMsgUiHandler();
 		sysConfig = SystemConfig.getInstance();
-		//Log.d(TAG, "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
+		//Debugger.d( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
 		thread = new SendMsgThread(sysConfig, crypto, uiHandler);
 		thread.start();
 		
@@ -204,19 +204,19 @@ public class MsgHistory extends Activity
     	case INTENT_PIC_VERIFY_DIALOG: {
     		if (thread.state == SendMsgThread.State.AUTHENTICATE_NEED_CONFIRM)
     		{
-    			Log.d(TAG, "thread state=" + thread.state.toString());
+    			Debugger.d( "thread state=" + thread.state.toString());
     			switch (resultCode) {
     			case RESULT_OK: {
 		    		Bundle bundle = data.getExtras();
 		    		thread.verification.code = bundle.getString("code");
-		    		Log.d(TAG, "wake up thread");
+		    		Debugger.d( "wake up thread");
 		    		synchronized(thread) {
 		    			thread.notify();
 		    		}
 		    		break;
     			}
 		    	default:
-		    		Log.e(TAG, "pic verify destroyed");
+		    		Debugger.e( "pic verify destroyed");
 		    		thread.stop();
 		    		break;
     			}
@@ -271,10 +271,10 @@ public class MsgHistory extends Activity
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			Log.d(TAG, "SmsReceiver.onReceive");
+			Debugger.d( "SmsReceiver.onReceive");
 			if (intent.getAction().equals(mReceiveAction)) 
 			{
-				Log.d(TAG, "SmsReceiver.onReceive SMS_RECEIVED");
+				Debugger.d( "SmsReceiver.onReceive SMS_RECEIVED");
 				
 				StringBuilder sb = new StringBuilder();
 				
@@ -292,7 +292,7 @@ public class MsgHistory extends Activity
 						String addr = sms.getOriginatingAddress();
 						long date = sms.getTimestampMillis();
 						String body = sms.getMessageBody();
-						Log.d(TAG, "received sms from " + addr);
+						Debugger.d( "received sms from " + addr);
 						if (addr.equals(mobileno)) {
 							hasThisContact = true;
 							//abortBroadcast();
@@ -305,7 +305,7 @@ public class MsgHistory extends Activity
 								 sp.play(newsmshit, 2, 1, 0, 0, (float)1.0);
 								
 							} catch (Exception e) {
-								Log.e(TAG, "can not play sound:" + e.getMessage());
+								Debugger.e( "can not play sound:" + e.getMessage());
 							}
 					    }
 						else {

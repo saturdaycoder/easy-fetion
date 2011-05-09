@@ -38,11 +38,11 @@ public class FetionPictureVerification
 					+ "User-Agent: IIC2.0/PC " + SystemConfig.protocolVersion + "\r\n"
 					+ "Connection: Close\r\n\r\n" ;
 			
-			//Log.d(TAG, "config request = \"" + str + "\"");
+			//Debugger.d( "config request = \"" + str + "\"");
 			OutputStream os = socket.getOutputStream();
 			InputStream is = socket.getInputStream();
 			os.write(str.getBytes());
-			//Log.d(TAG, "sent auth pic \"" +  str + "\"");
+			//Debugger.d( "sent auth pic \"" +  str + "\"");
 			byte output[] = new byte[1024];
 			int xml_len = -1;
 			int xmllen_startpos = -1;
@@ -75,14 +75,14 @@ public class FetionPictureVerification
 					}
 				}
 			}while (xml_len == -1 || total_len < xml_len + header_len);
-			//Log.d(TAG, "response = \"" + response + "\"");
+			//Debugger.d( "response = \"" + response + "\"");
 			String xmlstr = response.substring(header_len);
 			
 			// check http status code
 			int s = response.indexOf(' ') + 1;
 			int e = response.indexOf(' ', s);
 			String stateCode = response.substring(s, e);
-			//Log.d(TAG, "status code = \"" + stateCode + "\"");
+			//Debugger.d( "status code = \"" + stateCode + "\"");
 			if (!stateCode.equals("200"))
 				return null;
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance(); 
@@ -91,23 +91,23 @@ public class FetionPictureVerification
 			Node node = document.getFirstChild();
 			
 			Node n = node.getFirstChild();
-			//Log.d(TAG, "first node = \"" + n.getNodeName() + "\"");
+			//Debugger.d( "first node = \"" + n.getNodeName() + "\"");
 			// servers version
 			Node nId = n.getAttributes().getNamedItem("id");
 			Node nPic = n.getAttributes().getNamedItem("pic");
 			if (nId == null || nPic == null) {
-				Log.e(TAG, "error getting element id and pic");
+				Debugger.e( "error getting element id and pic");
 				return null;
 			}
 			this.guid = nId.getNodeValue();
 			this.pic_base64 = nPic.getNodeValue();					
 			
-			//Log.d(TAG, "guid = \"" + this.verifyGuid + "\"");
-			//Log.d(TAG, "pic = \"" + this.verifyPic + "\"");
+			//Debugger.d( "guid = \"" + this.verifyGuid + "\"");
+			//Debugger.d( "pic = \"" + this.verifyPic + "\"");
 	
 			return this.pic_base64.getBytes();
 		} catch (Exception e) {
-			Log.e(TAG, "error geting auth pic: " + e.getMessage());
+			Debugger.e( "error geting auth pic: " + e.getMessage());
 			return null;
 		}
 	}

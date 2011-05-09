@@ -22,6 +22,7 @@ public class RefreshThread extends Thread{
 	private Crypto crypto;
     private Handler workHandler;
     private Map<String, FetionContact> contactList;
+    //private Map<String, String> portraitList;
     public FetionPictureVerification verification;
     public State state;
     public enum State {
@@ -42,6 +43,12 @@ public class RefreshThread extends Thread{
     	WAIT_GET_CONTACT,
     	CONTACT_GETTING,
     	CONTACT_GET_SUCC,
+    	CONTACT_GET_FAIL,
+    	
+    	WAIT_GET_PORTRAIT,
+    	PORTRAIT_GETTING,
+    	PORTRAIT_GET_SUCC,
+    	PORTRAIT_GET_FAIL,
 
     	THREAD_EXIT,
     	
@@ -99,12 +106,12 @@ public class RefreshThread extends Thread{
         	is = Network.getSipcInputStream();
         	os = Network.getSipcOutputStream();
         } catch (Exception e) {
-        	Log.e(TAG, "error re-create sipc socket");
+        	Debugger.e( "error re-create sipc socket");
         	notifyState(State.NETWORK_DOWN);
         	return;
         }
         
-        Log.d(TAG, "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
+        Debugger.d( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
         
         try {
         	reg = new RegisterSession(sysConfig, crypto, is, os);
@@ -127,7 +134,7 @@ public class RefreshThread extends Thread{
             }
         } catch (Exception e) {
         	if (null != reg) {
-        		Log.e(TAG, "error in register session: " + e.getMessage());
+        		Debugger.e( "error in register session: " + e.getMessage());
         		notifyState(State.REGISTER_FAIL);
         		//try {
         			//sipcSocket.close();
@@ -146,7 +153,7 @@ public class RefreshThread extends Thread{
         do {
         	retry = false;
 	        try {
-	        	auth = new AuthenticationSession(sysConfig, crypto, is, os);//sipcSocket);
+	        	auth = new AuthenticationSession(sysConfig, crypto, is, os);
 	        	notifyState(State.AUTHENTICATE_RUNNING);
 	        	auth.send(verification);
 	        
@@ -158,7 +165,7 @@ public class RefreshThread extends Thread{
 	            switch(statuscode) {
 	            case 200:
 	            	auth.postprocessContacts(contactList);
-	            	Log.d(TAG, "Process a junk");
+	            	Debugger.d( "Process a junk");
 	            	auth.postprocessJunk();
 	            	retry = false;
 	            	break;
@@ -169,21 +176,17 @@ public class RefreshThread extends Thread{
 	            	synchronized(this) {
 	                	wait();
 	                }
-	            	Log.d(TAG, "refresh thread awakes");
-	            	//if (!verification.code.equals("")) {
-	            		//retry = true;
+	            	Debugger.d( "refresh thread awakes");
 	            	retry = true;
-	            	//}
 	            	break;
 	            default:
 	            	notifyState(State.AUTHENTICATE_FAIL);
-	            	//sipcSocket.close();
 	            	retry = false;
 	            	return;
 	            }
 	        } catch (Exception e) {
 	        	if (null != auth) {
-	        		Log.e(TAG, "error in authenticate session: " + e.getMessage());
+	        		Debugger.e( "error in authenticate session: " + e.getMessage());
 	        		notifyState(State.AUTHENTICATE_FAIL);
 	        		retry = false;
 	        		return;
@@ -206,7 +209,7 @@ public class RefreshThread extends Thread{
         	String uri = iter.next();
         	try {
         		/*if (fetionDb.hasContactByUri(contactList.get(uri).sipUri)) {
-        			Log.d(TAG, "contact already in database, skip");
+        			Debugger.d( "contact already in database, skip");
         			continue;
         		}*/
         		
@@ -232,47 +235,97 @@ public class RefreshThread extends Thread{
         				nickname = "";//unknown";
         			}
         			contactList.get(uri).nickName = nickname;
-        			Log.d(TAG, "got user detail: nickname=" + nickname + " no = " + mobileno);
+        			Debugger.d( "got user detail: nickname=" + nickname + " no = " + mobileno);
         			//fetionDb.setContact(contactList.get(uri));
-        			//Log.d(TAG, "save contact into database");
+        			//Debugger.d( "save contact into database");
         		}
         	} catch (Exception e) {
-        		Log.e(TAG, "error happened getting detail[" + contactList.get(uri).sipUri 
+        		Debugger.e( "error happened getting detail[" + contactList.get(uri).sipUri 
         				+ "]: " + e.getMessage());
         	}
         }
         
         notifyState(State.CONTACT_GET_SUCC);
 
-        boolean dretry = false;
-        do {
+        boolean dretry = true;
+        //do {
 	        SipcDropCommand cmd = new SipcDropCommand(sysConfig.sId);
 	        try {
-	        	Log.d(TAG, "send drop command: " + cmd.toString());
+	        	Debugger.d( "send drop command: " + cmd.toString());
 				os.write(cmd.toString().getBytes());
+				dretry = false;
 				SipcResponse res = (SipcResponse)parser.parse(is);
 				if (res == null) {
-					dretry = true;
-					continue;
+					
+					//continue;
 				}
-				Log.d(TAG, "received response: " + res.toString());
+				Debugger.d( "received response: " + res.toString());
 				if (res.getResponseCode() == 200) {
-					dretry = false;
-					break;
+					
+					//break;
 				}
 				else {
-					dretry = true;
-					continue;
+					
+					//continue;
 				}
 	        } catch (IOException e) {
-	        	dretry = true;
-				continue;
+	        	
+	        	Debugger.e( "drop error: " + e.getMessage());
+				//continue;
 	        }
-        } while (dretry);
+        //} while (dretry);
+
+        try {
+        	Network.closeSipcSocket();
+        } catch (Exception e) {
+        	
+        }
+        
+        // update each contact's portrait
+        Socket pSocket = null;
+        InputStream pIs = null;
+        OutputStream pOs = null;
+        try { 
+	        pSocket = new Socket(sysConfig.portraitServersName, 80);
+	        pIs = pSocket.getInputStream();
+	        pOs = pSocket.getOutputStream();
+	    } catch (Exception e) {
+	    	notifyState(State.PORTRAIT_GET_FAIL);
+	    	Debugger.e( "creating socket for loading portraits failed: " + e.getMessage());
+	    	return;
+	    }
+	    iter = contactList.keySet().iterator();
+	    FetionHttpMessageParser p = new FetionHttpMessageParser();
+        while (iter.hasNext())
+        {
+        	String uri = iter.next();
+        	FetionContact fc = contactList.get(uri);
+        	FetionHttpMessage req = new FetionLoadPortraitHttpRequest(
+        			"/" + sysConfig.portraitServersPath + "/getportrait.aspx", fc.sipUri, 
+        			Network.encodeUril(sysConfig.ssic),
+        			sysConfig.portraitServersName);
+        	try {
+        		pOs.write(req.toString().getBytes());
+        		Debugger.d( "sent request: " + req.toString());
+	        	FetionHttpResponse res = (FetionHttpResponse)p.parse(pIs);
+	        	if (res != null) {
+	        		Debugger.d( "received response: " + res.toString());
+	        	}
+	        	if (res != null && res.getResponseCode() == 200) {
+	        		fc.portrait = res.body;
+	        		Debugger.d( "successfully got portrait for " + uri);
+	        	}
+        	} catch (Exception e) {
+        		Debugger.e( "loading portrait for " + uri + " failed: " + e.getMessage());
+        	}
+        }
+        
+        notifyState(State.PORTRAIT_GET_SUCC);
+        
         
                 
         try {
-        	Network.closeSipcSocket();
+        	pSocket.close();
         } catch (Exception e) {
         	
         }

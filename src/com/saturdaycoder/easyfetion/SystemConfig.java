@@ -35,6 +35,7 @@ public class SystemConfig {
 	public String configHintsVersion;// = "";
 	public String sipcProxyIp;// = "";
 	public int sipcProxyPort;// = -1;
+	public String ssic;
 	public static String clientType = "PC";
 	public static String clientPlatform = "W5.1";
 	public String portraitServersName;// = "";
@@ -74,13 +75,13 @@ public class SystemConfig {
 	
 	protected SystemConfig(){
 		
-		Log.d(TAG, "SYSTEMCONFIG CTOR");
+		Debugger.d( "SYSTEMCONFIG CTOR");
 		
 		publicIp = "";
 		lastLoginIp = "";
 		lastLoginPlace = "";
 		lastLoginTime = "";
-		
+		ssic = "";
 		contacts = new ArrayList<FetionContact>();
 		
 		sId = "";
@@ -171,15 +172,15 @@ public class SystemConfig {
 			xs.endTag(null, "client");
 			
 			xs.startTag(null,"servers");
-			xs.attribute(null, "version", this.configServersVersion);
+			xs.attribute(null, "version", "0");//this.configServersVersion);
 			xs.endTag(null, "servers");
 			
 			xs.startTag(null,"parameters");
-			xs.attribute(null,"version", this.configParametersVersion);
+			xs.attribute(null,"version", "0");//this.configParametersVersion);
 			xs.endTag(null, "parameters");
 			
 			xs.startTag(null,"hints");
-			xs.attribute(null, "version", this.configHintsVersion);
+			xs.attribute(null, "version", "0");//this.configHintsVersion);
 			xs.endTag(null, "hints");
 			
 			xs.endTag(null, "config");
@@ -187,7 +188,7 @@ public class SystemConfig {
 			
 			return sw.toString();
 		} catch (Exception e) {
-			Log.e(TAG, "error generating conf download xml: " + e.getMessage());
+			Debugger.e( "error generating conf download xml: " + e.getMessage());
 			return null;
 		}
 		/*try {
@@ -199,7 +200,7 @@ public class SystemConfig {
 	        ret = ret.substring(ret.indexOf("<config>"));
 	        return ret;
 		} catch (Exception e) {
-			Log.e(TAG, "error generating body: " + e.getMessage());
+			Debugger.e( "error generating body: " + e.getMessage());
 			return null;
 		}*/
 		//return XmlConverter.xml2String(doc);
@@ -219,7 +220,7 @@ public class SystemConfig {
 		           + "Connection: Close\r\n" 
 		           + "Content-Length: " + body.length() + "\r\n\r\n" + body;
 			
-			Log.d(TAG, "config request = \"" + str + "\"");
+			Debugger.d( "config request = \"" + str + "\"");
 			OutputStream os = socket.getOutputStream();
 			InputStream is = socket.getInputStream();
 			
@@ -263,7 +264,7 @@ public class SystemConfig {
 			FetionHttpMessageParser parser = new FetionHttpMessageParser();
 			FetionHttpResponse resp = (FetionHttpResponse)parser.parse(is);
 			
-			Log.d(TAG, "config download response = \"" + resp.toString()+"\"");
+			Debugger.d( "config download response = \"" + resp.toString()+"\"");
 			
 			String xmlstr = resp.body;//response.substring(header_len);
 			
@@ -273,7 +274,7 @@ public class SystemConfig {
 				DocumentBuilder db = dbf.newDocumentBuilder(); //ParserConfigurationException
 				Document document = db.parse(new ByteArrayInputStream(xmlstr.getBytes())); // SAXException/IOException
 				Node node = document.getFirstChild();
-				Log.d(TAG, "rootnode name is " + node.getNodeName());
+				Debugger.d( "rootnode name is " + node.getNodeName());
 				
 				NodeList nl = node.getChildNodes();
 				
@@ -283,34 +284,36 @@ public class SystemConfig {
 					if (nl.item(j).getNodeName().equals("servers"))
 					{
 						this.configServersVersion = nl.item(j).getAttributes().getNamedItem("version").getNodeValue();
-						Log.d(TAG, "servers version = " + this.configServersVersion);
+						Debugger.d( "servers version = " + this.configServersVersion);
 						NodeList nlservers = nl.item(j).getChildNodes();
-						Log.d(TAG, "servers node has " + nlservers.getLength() + " child nodes");
+						Debugger.d( "servers node has " + nlservers.getLength() + " child nodes");
 						for (int i = 0; i < nlservers.getLength(); ++i) 
 						{
 							Node n = nlservers.item(i);
 							// sipc-proxy
 							if (n.getNodeName().equals("sipc-proxy")) 
 							{
-								Log.d(TAG, "found sipc proxy node");
+								Debugger.d( "found sipc proxy node");
 								String tmp = n.getFirstChild().getNodeValue();//n.getTextContent();
-								Log.d(TAG, "found sipc proxy node value: " + tmp);
+								Debugger.d( "found sipc proxy node value: " + tmp);
 								this.sipcProxyIp = tmp.substring(0, tmp.indexOf(':'));
-								Log.d(TAG, "sipcProxyIp = \"" + this.sipcProxyIp + "\"");
+								Debugger.d( "sipcProxyIp = \"" + this.sipcProxyIp + "\"");
 								this.sipcProxyPort = Integer.parseInt(tmp.substring(tmp.indexOf(':') + 1));
-								Log.d(TAG, "sipcProxyPort = " + this.sipcProxyPort);
+								Debugger.d( "sipcProxyPort = " + this.sipcProxyPort);
 							}
 							// get-uri
 							if (n.getNodeName().equals("get-uri")) 
 							{
-								Log.d(TAG, "found get-uri node");
-								String tmp = n.getFirstChild().getNodeValue();//n.getTextContent();
+								Debugger.d( "found get-uri node");
+								String tmp = n.getFirstChild().getNodeValue();
 								tmp = tmp.substring(tmp.indexOf("http://") + 7);
 								int firstSlashPos = tmp.indexOf('/');
+								//int secondSlashPos = tmp.substring(firstSlashPos + 1).indexOf('/');
 								this.portraitServersName = tmp.substring(0, firstSlashPos);
-								Log.d(TAG, "portraitServersName = \"" + this.portraitServersName + "\"");
+								Debugger.d( "portraitServersName = \"" + this.portraitServersName + "\"");
 								this.portraitServersPath = tmp.substring(firstSlashPos + 1);
-								Log.d(TAG, "portraitServersPath = \"" + this.portraitServersPath + "\"");
+								this.portraitServersPath = this.portraitServersPath.substring(0, this.portraitServersPath.indexOf('/'));
+								Debugger.d( "portraitServersPath = \"" + this.portraitServersPath + "\"");
 							}
 						}
 					}
@@ -320,7 +323,7 @@ public class SystemConfig {
 					{
 						//Node nParameters = nl.getNamedItem("parameters");
 						this.configParametersVersion = nl.item(j).getAttributes().getNamedItem("version").getNodeValue();
-						Log.d(TAG, "parameters version = " + this.configParametersVersion);
+						Debugger.d( "parameters version = " + this.configParametersVersion);
 					}
 					
 					// hints version
@@ -328,13 +331,13 @@ public class SystemConfig {
 					{
 						//Node nHints = nl.getNamedItem("hints");
 						this.configHintsVersion = nl.item(j).getAttributes().getNamedItem("version").getNodeValue();
-						Log.d(TAG, "hints version = " + this.configHintsVersion);
+						Debugger.d( "hints version = " + this.configHintsVersion);
 					}
 				}
 				
 
 			} catch (Exception e) {
-				Log.e(TAG, "error happens: " + e.getClass().getName());
+				Debugger.e( "error happens: " + e.getClass().getName());
 			}
 			
 			

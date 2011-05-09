@@ -49,7 +49,7 @@ public class AccountSettingDialog extends Activity
 				try {
 					localMobileno = Network.getPhoneNumber();
 				} catch (Exception e) {
-					Log.e(TAG, "error getting local phone number: " + e.getMessage());
+					Debugger.e( "error getting local phone number: " + e.getMessage());
 				}
 				
 				if (!localMobileno.equals(mobileno)) {
@@ -88,7 +88,7 @@ public class AccountSettingDialog extends Activity
 	@Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-    	Log.d(TAG, "onActivityResult: " + requestCode + ", " + resultCode );
+    	Debugger.d( "onActivityResult: " + requestCode + ", " + resultCode );
     	switch (requestCode) {
     	case 0: {
     		Bundle b = new Bundle();
@@ -110,7 +110,7 @@ public class AccountSettingDialog extends Activity
     }
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent msg) {
-		//Log.v(TAG, "ACCSET onDestroy");
+		//Debugger.v( "ACCSET onDestroy");
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			Bundle b = new Bundle();
 	

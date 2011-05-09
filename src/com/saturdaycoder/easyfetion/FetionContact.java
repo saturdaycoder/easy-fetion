@@ -27,10 +27,15 @@ public class FetionContact {
 	public int imageChanged = -1;
 	public int dirty = -1;
 	public String version = "";
+	public String portrait = "";
 	
 	public String getFetionNumber() {
 		int sipbegin = sipUri.indexOf("sip:");
 		if (sipbegin == -1) {
+			int telbegin = sipUri.indexOf("tel:");
+			if (telbegin == -1) {
+				return sipUri.substring(telbegin + 4);
+			}
 			return "";
 		}
 		

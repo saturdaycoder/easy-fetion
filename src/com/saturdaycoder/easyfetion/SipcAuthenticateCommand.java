@@ -66,14 +66,14 @@ public class SipcAuthenticateCommand extends SipcCommand
 	        try {
 	        	machinecode = Network.getWifiMacAddr();
 	        } catch (Exception e) {
-	        	Log.e(TAG, "error getting WIFI MAC address: " + e.getMessage());
+	        	Debugger.e( "error getting WIFI MAC address: " + e.getMessage());
 	        }
 	        
 	        if (machinecode == null || machinecode.equals("")) {
 	        	try {
 	        		machinecode = Network.getDeviceId();
 	        	} catch (Exception e) {
-	        		Log.e(TAG, "error getting Device ID: " + e.getMessage());
+	        		Debugger.e( "error getting Device ID: " + e.getMessage());
 	        	}
 	        } 
 	        
@@ -125,7 +125,7 @@ public class SipcAuthenticateCommand extends SipcCommand
 			
 			return sw.toString();
 		} catch (Exception e) {
-			Log.e(TAG, "error generating auth xml: " + e.getMessage());
+			Debugger.e( "error generating auth xml: " + e.getMessage());
 			return null;
 		}
 	

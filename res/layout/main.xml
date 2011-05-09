@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="300px"
-    android:layout_height="600px"
-    
+    android:layout_width="280dip"
+    android:layout_height="400dip"
     >
 <ListView 
-    android:layout_height="350px" 
+    android:layout_height="fill_parent" 
     android:id="@+id/lvContacts" 
     android:layout_width="fill_parent"
-    android:layout_gravity="center"/>
-</LinearLayout>
+    android:layout_alignParentBottom="true"
+    android:layout_below="@+id/textContactList"
+	/>
+<TextView 
+	android:layout_width="150dip" 
+	android:layout_height="30dip" 
+	
+	android:text="好友列表" 
+	android:id="@+id/textContactList" 
+	android:layout_alignLeft="@+id/lvContacts" 
+	android:layout_alignParentTop="true"
+	/>
+</RelativeLayout>
 

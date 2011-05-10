@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.saturdaycoder.easyfetion.LoginThread.Command;
+import com.saturdaycoder.easyfetion.HttpThread.Command;
 
 import android.os.Handler;
 import android.content.res.*;
@@ -58,8 +58,8 @@ public class EasyFetion extends Activity
     
     //private FetionPictureVerification verification;
     
-    private LoginThread loginThread;
-    private RefreshThread refreshThread;
+    private HttpThread loginThread;
+    private SipcThread refreshThread;
     
     //private boolean pendingLogin = false;
 
@@ -85,10 +85,40 @@ public class EasyFetion extends Activity
     	@Override
         public void handleMessage(Message msg) 
 		{
-    		RefreshThread.State state = (RefreshThread.State)msg.obj;
+    		SipcThread.State state = (SipcThread.State)msg.obj;
     		Debugger.v( "received reports of state: " + state.toString());
     		switch (state) {
-			case AUTHENTICATE_NEED_CONFIRM: {					
+    		case INIT:
+    		case CONNECTING_SIPC:
+    			break;
+    		case CONNECTING_SUCC:
+	    		refreshThread.addCommand(SipcThread.Command.REGISTER, null);
+	    		break;
+    		case CONNECTING_FAIL:
+    			dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			showerr(TAG, "Pls check your network connection");
+    			break;
+    		case DISCONNECTING_SIPC:
+    		case DISCONNECTING_SUCC:
+    		case DISCONNECTING_FAIL:
+    			
+    		case WAIT_REGISTER:
+    		case REGISTER_SENDING:
+    		case REGISTER_READING:
+    		case REGISTER_POSTPROCESSING:
+    		case REGISTER_FAIL:
+    			break;
+    		case REGISTER_SUCC:
+
+	    		refreshThread.addCommand(SipcThread.Command.AUTHENTICATE, null);
+	    		break;
+        	
+    		case WAIT_AUTHENTICATE:
+    		case AUTHENTICATE_SENDING:
+    		case AUTHENTICATE_READING:
+    		case AUTHENTICATE_POSTPROCESSING:
+    			break;
+    		case AUTHENTICATE_NEED_CONFIRM: {					
 				Intent intent = new Intent();
 				intent.setClass(EasyFetion.this, PictureVerifyDialog.class);
 				Bundle bundle = new Bundle();
@@ -100,33 +130,18 @@ public class EasyFetion extends Activity
 				
 				break;
 			}
-			case PORTRAIT_GET_SUCC: {
+    		case AUTHENTICATE_SUCC:
 
-				loadContactList();
-				Iterator<String> iter = contactList.keySet().iterator();
-        		while (iter.hasNext()) {
-        			String uri = iter.next();
-        			FetionContact c = contactList.get(uri);
-        			//FetionDatabase.getInstance().setContact(c);
-        			if (!c.portrait.equals("")) {
-        				try{
-        					FileOutputStream fos = openFileOutput(/*"/sdcard/"*/ 
-        							c.userId + ".JPG", Context.MODE_PRIVATE);
-        					fos.write(c.portrait.getBytes(), 0, c.portrait.getBytes().length);
-        					//fw.flush();
-        					fos.close();
-        					Debugger.d( "portrait " + c.sId + " wrote succeeded");
-        			    } catch(Exception e) {
-        			       e.printStackTrace();
-        			       Debugger.e( "portrait " + c.sId + " wrote failed: " + e.getMessage());
-        			    }
-        			} else {
-        				Debugger.d( "portrait " + c.sId + " not exist");
-        			}
-        		}
+	    		refreshThread.addCommand(SipcThread.Command.GET_CONTACTS, null);
+	    		break;
+    		case AUTHENTICATE_FAIL:
+    			dismissDialog(DIALOG_REFRESH_PROGRESS);
+				showerr(TAG, "authenticate failed. try again");
 				break;
-			}
-			case CONTACT_GET_SUCC: {
+    		case WAIT_GET_CONTACT:
+    		case CONTACT_GETTING:
+    			break;
+    		case CONTACT_GET_SUCC: {
 				dismissDialog(DIALOG_REFRESH_PROGRESS);
 				FetionDatabase.getInstance().setUserInfo(sysConfig);
 				
@@ -149,12 +164,55 @@ public class EasyFetion extends Activity
 				showerr(TAG, "Congratulations! contact list ok!!");
 				break;
 			}
-			case AUTHENTICATE_FAIL:
-				dismissDialog(DIALOG_REFRESH_PROGRESS);
-				showerr(TAG, "authenticate failed. try again");
-				break;
+    		case CONTACT_GET_FAIL:
+    			dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			showerr(TAG, "Failed to get contact list");
+    			break;
+    		case WAIT_DROP:
+    		case DROP_SENDING:
+    		case DROP_READING:
+    		case DROP_POSTPROCESSING:
+    		case DROP_FAIL:
+    		case DROP_SUCC:
+    			break;
+    		case THREAD_EXIT:
+    			break;
+    		case NETWORK_DOWN:
+    			dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			showerr(TAG, "Pls check your network connection");
+    			break;
+    		case NETWORK_TIMEOUT:
+    			dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			showerr(TAG, "Network connection timed out");
+    			break;
 			default:
 				break;
+			/*case PORTRAIT_GET_SUCC: {
+
+				loadContactList();
+				Iterator<String> iter = contactList.keySet().iterator();
+        		while (iter.hasNext()) {
+        			String uri = iter.next();
+        			FetionContact c = contactList.get(uri);
+        			//FetionDatabase.getInstance().setContact(c);
+        			if (!c.portrait.equals("")) {
+        				try{
+        					FileOutputStream fos = openFileOutput(
+        							c.userId + ".JPG", Context.MODE_PRIVATE);
+        					fos.write(c.portrait.getBytes(), 0, c.portrait.getBytes().length);
+        					//fw.flush();
+        					fos.close();
+        					Debugger.d( "portrait " + c.sId + " wrote succeeded");
+        			    } catch(Exception e) {
+        			       e.printStackTrace();
+        			       Debugger.e( "portrait " + c.sId + " wrote failed: " + e.getMessage());
+        			    }
+        			} else {
+        				Debugger.d( "portrait " + c.sId + " not exist");
+        			}
+        		}
+				break;
+			}*/
 			}
 		}
 	}
@@ -163,7 +221,7 @@ public class EasyFetion extends Activity
     	@Override
         public void handleMessage(Message msg) 
 		{
-    		LoginThread.State state = (LoginThread.State)msg.obj;
+    		HttpThread.State state = (HttpThread.State)msg.obj;
 			
 			Debugger.v( "received reports of state: " + state.toString());
 			
@@ -183,17 +241,13 @@ public class EasyFetion extends Activity
 			case LOGIN_FAIL: 
 				dismissDialog(INTENT_ACC_SET_DIALOG);
 				showerr(TAG, "Login failed. input your account again");
-				if (loginThread.isAlive()) {
-					loginThread.stop();
-				}
+
 				break;
 			case LOGIN_SUCC: 
 				FetionDatabase.getInstance().setAccount(sysConfig);
 				FetionDatabase.getInstance().clearContacts();
-				if (!loginThread.isAlive()) {
-					loginThread.start();
-				}
-	    		loginThread.addCommand(Command.DOWNLOAD_CONFIG);
+
+	    		loginThread.addCommand(Command.DOWNLOAD_CONFIG, null);
 				break;	
 			case CONFIG_DOWNLOAD_SUCC:
 				dismissDialog(INTENT_ACC_SET_DIALOG);
@@ -203,18 +257,17 @@ public class EasyFetion extends Activity
 				showDialog(DIALOG_REFRESH_PROGRESS);
 				sysConfig.contactVersion = "0";
 	    		
-				refreshThread = new RefreshThread(sysConfig, crypto,
-						contactList, refreshUiHandler);
-				refreshThread.start();
-				
+				refreshThread.addCommand(SipcThread.Command.CONNECT_SIPC, null);
 				break;
 			case CONFIG_DOWNLOAD_FAIL:
+				dismissDialog(INTENT_ACC_SET_DIALOG);
+				showerr(TAG, "Your login failed");
 				break;
 			case NETWORK_DOWN:
 				showerr(TAG, "Network error!!");
-				if (loginThread.isAlive()) {
-					loginThread.stop();
-				}
+				break;
+			default:
+				break;
 			}
 			
 		}
@@ -236,12 +289,12 @@ public class EasyFetion extends Activity
 
         Network.setActivity(this);
         
-        if (!Network.isNetworkAvailable()) {
+        /*if (!Network.isNetworkAvailable()) {
         	showerr(TAG, "Give me your WIFI/3G's ass. Or I get nothing to fuck");
 
         	finish();
         	return;
-        }
+        }*/
         
         FetionDatabase.setInstance(this);
         SmsDbAdapter.setContext(this);
@@ -253,10 +306,14 @@ public class EasyFetion extends Activity
         contactList = new LinkedHashMap<String, FetionContact>();
         crypto = Crypto.getInstance();
         
-        loginThread = new LoginThread(sysConfig, loginUiHandler);
-        refreshThread = new RefreshThread(sysConfig, crypto,
+        loginThread = new HttpThread(sysConfig, loginUiHandler);
+        refreshThread = new SipcThread(sysConfig, crypto,
 				contactList, refreshUiHandler);
 
+        loginThread.start();
+        refreshThread.start();
+        
+        
         lvContacts.setOnItemClickListener(new OnItemClickListener() {
         	@Override
         	public void onItemClick(AdapterView<?> a, View v, int position, long id) 
@@ -313,10 +370,7 @@ public class EasyFetion extends Activity
 	
 	    		showDialog(DIALOG_LOGIN_PROGRESS);
 	    		
-				if (!loginThread.isAlive()) {
-					loginThread.start();
-				}
-				loginThread.addCommand(Command.LOGIN);
+				loginThread.addCommand(Command.LOGIN, null);
 	    		Debugger.v( "Dialog created and returned");
     		}
     		else {
@@ -325,22 +379,18 @@ public class EasyFetion extends Activity
     		break;
     	}
     	case INTENT_PIC_VERIFY_DIALOG_FOR_LOGIN: {
-    		if (loginThread != null && (loginThread.state == LoginThread.State.LOGIN_NEED_CONFIRM))
+    		if (loginThread != null && (loginThread.state == HttpThread.State.LOGIN_NEED_CONFIRM))
     		{
     			switch (resultCode) {
     			case RESULT_OK: {
 		    		Bundle bundle = data.getExtras();
 		    		loginThread.verification.code = bundle.getString("code"); 
-					if (!loginThread.isAlive()) {
-						loginThread.start();
-					}
-		    		loginThread.addCommand(Command.LOGIN);
+		    		loginThread.addCommand(Command.LOGIN, null);
 		    		break;
     			}
 		    	default:
 		    		Debugger.e( "pic verify destroyed");
-		    		if (loginThread.isAlive())
-		    			loginThread.stop();
+		    		dismissDialog(DIALOG_LOGIN_PROGRESS);
 		    		break;
     			}
     		}
@@ -348,19 +398,17 @@ public class EasyFetion extends Activity
     	}
     	case INTENT_PIC_VERIFY_DIALOG_FOR_AUTHENTICATE: {
     		Debugger.d( "refreshThread state = " + refreshThread.state.ordinal());
-    		if (refreshThread != null && (refreshThread.state == RefreshThread.State.AUTHENTICATE_NEED_CONFIRM)) {
+    		if (refreshThread != null && (refreshThread.state == SipcThread.State.AUTHENTICATE_NEED_CONFIRM)) {
     			switch (resultCode) {
     			case RESULT_OK: {
 		    		Bundle bundle = data.getExtras();
 		    		refreshThread.verification.code = bundle.getString("code"); 
-		    		synchronized(refreshThread) {
-		    			refreshThread.notify();
-		    		}
+		    		refreshThread.addCommand(SipcThread.Command.AUTHENTICATE, null);
 		    		break;
     			}
 		    	default:
-		    		Debugger.e( "pic verify destroyed");
-		    		refreshThread.stop();
+		    		dismissDialog(DIALOG_REFRESH_PROGRESS);
+		    		showerr(TAG,  "User gave up authentication");
 		    		break;
     			}
     		}
@@ -503,10 +551,10 @@ public class EasyFetion extends Activity
     	Debugger.i( "QUICKFETION ONDESTROY");
     	super.onDestroy();
     	
-    	if (loginThread != null)
+    	if (loginThread.isAlive())
     		loginThread.stop();
     	
-    	if (refreshThread != null)
+    	if (refreshThread.isAlive())
     		refreshThread.stop();
     	
     	try {
@@ -567,9 +615,10 @@ public class EasyFetion extends Activity
 				showDialog(DIALOG_REFRESH_PROGRESS);
 				FetionDatabase.getInstance().clearContacts();
 	    		sysConfig.contactVersion = "0";
-				refreshThread = new RefreshThread(sysConfig, crypto,
-						contactList, refreshUiHandler);
-				refreshThread.start();
+	    		if (!refreshThread.isAlive()) {
+	    			refreshThread.start();
+				}
+	    		refreshThread.addCommand(SipcThread.Command.CONNECT_SIPC, null);
                 break;  
             case MENU_ABOUT_ID:  
                 showerr(TAG, "This client is fucking awesome!");  
@@ -586,7 +635,7 @@ public class EasyFetion extends Activity
                 dialog.setTitle("Login");
                 dialog.setMessage("Please wait while loging in...");
                 dialog.setIndeterminate(true);
-                dialog.setCancelable(true);
+                dialog.setCancelable(false);
                 return dialog;
             }
             case DIALOG_REFRESH_PROGRESS: {
@@ -594,14 +643,14 @@ public class EasyFetion extends Activity
                 dialog.setTitle("Refresh");
                 dialog.setMessage("Please wait while refreshing...");
                 dialog.setIndeterminate(true);
-                dialog.setCancelable(true);
+                dialog.setCancelable(false);
                 return dialog;
             }
         }
         return null;
     }
     
-    @Override 
+    /*@Override 
     protected void onPrepareDialog(int id, Dialog dialog) { 
         switch(id){ 
         case DIALOG_LOGIN_PROGRESS: 
@@ -632,7 +681,7 @@ public class EasyFetion extends Activity
         default:
         	break;
         } 
-    } 
+    } */
 }
         
     

@@ -18,7 +18,7 @@ public class AuthenticationSession {
 		
 	public AuthenticationSession(SystemConfig sysConfig, Crypto crypto, 
 			InputStream is, OutputStream os)
-			throws IOException
+			
 	{
 		this.sysConfig = sysConfig;
 		//this.socket = socket;

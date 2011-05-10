@@ -2,9 +2,9 @@ package com.saturdaycoder.easyfetion;
 
 import java.io.InputStream;
 import java.io.IOException;
-
+import java.net.SocketTimeoutException;
 public class FetionHttpMessageParser extends SocketMessageParser {
-	public SocketMessage parse(InputStream is) throws IOException
+	public SocketMessage parse(InputStream is) throws IOException, SocketTimeoutException
 	{	
 		
 		byte output[] = new byte[2048];

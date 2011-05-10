@@ -4,7 +4,7 @@ import java.io.*;
 
 public class SipcMessageParser extends SocketMessageParser
 {
-	public SocketMessage parse(InputStream is) throws IOException
+	public SocketMessage parse(InputStream is) throws IOException, java.net.SocketTimeoutException
 	{	
 		
 		byte output[] = new byte[2048];

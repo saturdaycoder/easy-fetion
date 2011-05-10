@@ -17,8 +17,9 @@ import java.util.HashMap;
 import android.telephony.gsm.SmsMessage;
 import android.content.IntentFilter;
 import android.os.Vibrator;
-import com.saturdaycoder.easyfetion.SendMsgThread.Command;
-
+import com.saturdaycoder.easyfetion.SipcThread.Command;
+import com.saturdaycoder.easyfetion.SipcThread.State;
+import com.saturdaycoder.easyfetion.SipcThread.ThreadState;
 
 public class MsgHistory extends Activity
 {
@@ -32,7 +33,7 @@ public class MsgHistory extends Activity
 	private Crypto crypto;
 	private SystemConfig sysConfig;
 	private Handler uiHandler;
-	private SendMsgThread thread;
+	private SipcThread thread;
 	private static final int INTENT_PIC_VERIFY_DIALOG = 1;
 	private ArrayList<AndroidSms> smsList = null;
 	private String nickname = null;
@@ -57,7 +58,9 @@ public class MsgHistory extends Activity
 		lvMsgList = (ListView)findViewById(R.id.lvMsgList);
 		
 		receiver = new SmsReceiver();
-		
+		uiHandler = new SendMsgUiHandler();
+		thread = new SipcThread(sysConfig, crypto, null, uiHandler);
+		thread.start();
 		
 		// prepare notification
 		vb = (Vibrator)getApplication().getSystemService(Service.VIBRATOR_SERVICE);
@@ -87,7 +90,7 @@ public class MsgHistory extends Activity
         		FetionContact fc = FetionDatabase.getInstance().getContactByUri(sipuri);
         		fm.contact = fc;
         		fm.msg = editMsgText.getText().toString();
-        		thread.addCommand(Command.SEND_MSG, fm);
+        		thread.addCommand(Command.CONNECT_SIPC, fm);
         	}
         });
 		
@@ -97,9 +100,56 @@ public class MsgHistory extends Activity
 		@Override
         public void handleMessage(Message msg) 
 		{
-			SendMsgThread.ThreadState ss = (SendMsgThread.ThreadState)msg.obj;
+			ThreadState ss = (ThreadState)msg.obj;
 			Debugger.d( "sendmsgthread reports " + ss.state.toString());
 			switch (ss.state) {
+			case CONNECTING_SIPC: 
+				break;
+			case CONNECTING_SUCC: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				thread.addCommand(Command.REGISTER, fm);
+				break;
+			}
+			case CONNECTING_FAIL: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("msg failed to " + fm.contact.nickName
+						+ ": " + fm.msg + ", because of network error");
+				btnSend.setClickable(true);
+				editMsgText.setText(fm.msg);
+        		editMsgText.setEnabled(true);
+				break;
+			}
+			case DISCONNECTING_SIPC:
+				break;
+			case DISCONNECTING_SUCC:
+			case DISCONNECTING_FAIL: {
+				btnSend.setClickable(true);
+				editMsgText.setEnabled(true);
+				break;
+			}
+			case WAIT_REGISTER:
+			case REGISTER_SENDING:
+			case REGISTER_READING:
+			case REGISTER_POSTPROCESSING:
+				break;
+			case REGISTER_FAIL: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("msg failed to " + fm.contact.nickName
+						+ ": " + fm.msg + ", because of network error");
+				thread.addCommand(Command.DISCONNECT_SIPC, fm);
+				editMsgText.setText(fm.msg);
+				break;
+			}
+			case REGISTER_SUCC: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				thread.addCommand(Command.AUTHENTICATE, fm);
+				break;
+			}
+			case WAIT_AUTHENTICATE:
+			case AUTHENTICATE_SENDING:
+			case AUTHENTICATE_READING:
+			case AUTHENTICATE_POSTPROCESSING:
+				break;
 			case AUTHENTICATE_NEED_CONFIRM:
 				Intent intent = new Intent();
 				intent.setClass(MsgHistory.this, PictureVerifyDialog.class);
@@ -110,36 +160,61 @@ public class MsgHistory extends Activity
 				intent.putExtras(bundle);
 				startActivityForResult(intent, INTENT_PIC_VERIFY_DIALOG);
 				break;
-			case MSG_TRANSFERED: {
+			case AUTHENTICATE_SUCC: {
 				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("successfully sent msg to " + fm.contact.nickName
-						+ ": " + fm.msg);
-				loadMsgList();
-				btnSend.setClickable(true);
-				editMsgText.setText("");
-        		editMsgText.setEnabled(true);
+				thread.addCommand(Command.SEND_MSG, fm);
 				break;
 			}
-			case MSG_FAILED:{
-				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("failed sent msg to " + fm.contact.nickName
-						+ ": " + fm.msg);
-				btnSend.setClickable(true);
-        		editMsgText.setEnabled(true);
-				break;
-			}
-			case NETWORK_ERROR:{
+			case AUTHENTICATE_FAIL: {
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("msg failed to " + fm.contact.nickName
 						+ ": " + fm.msg + ", because of network error");
-				btnSend.setClickable(true);
-        		editMsgText.setEnabled(true);
+				thread.addCommand(Command.DISCONNECT_SIPC, fm);
+				editMsgText.setText(fm.msg);
+				break;
+			}
+			case WAIT_SEND_MSG:
+			case SEND_MSG_SENDING:
+			case SEND_MSG_READING:
+			case SEND_MSG_POSTPROCESSING:
+				break;
+			case SEND_MSG_SUCC_ONLINE: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("successfully sent msg via CLIENT to " + fm.contact.nickName
+						+ ": " + fm.msg);
+				loadMsgList();
+				thread.addCommand(Command.DROP, fm);
+				break;
+			}
+			case SEND_MSG_SUCC_SMS: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("successfully sent msg via SMS to " + fm.contact.nickName
+						+ ": " + fm.msg);
+				loadMsgList();
+				thread.addCommand(Command.DROP, fm);
+				break;
+			}
+			case SEND_MSG_FAIL: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("failed sent msg to " + fm.contact.nickName
+						+ ": " + fm.msg);
+				thread.addCommand(Command.DROP, fm);
+				editMsgText.setText(fm.msg);
+				break;
+			}
+			case WAIT_DROP:
+			case DROP_SENDING:
+			case DROP_READING:
+			case DROP_POSTPROCESSING:
+				break;
+			case DROP_FAIL:
+			case DROP_SUCC: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				thread.addCommand(Command.DISCONNECT_SIPC, fm);
 				break;
 			}
 			default:
-				btnSend.setClickable(true);
-        		editMsgText.setEnabled(true);
-        		break;
+				break;
 			}
 		}
 	}
@@ -185,12 +260,8 @@ public class MsgHistory extends Activity
 		
 		
 		loadMsgList();
-		uiHandler = new SendMsgUiHandler();
+		//uiHandler = new SendMsgUiHandler();
 		sysConfig = SystemConfig.getInstance();
-		//Debugger.d( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
-		thread = new SendMsgThread(sysConfig, crypto, uiHandler);
-		thread.start();
-		
 		
 	}
 	
@@ -199,27 +270,14 @@ public class MsgHistory extends Activity
     {
     	switch (requestCode) {
     	case INTENT_PIC_VERIFY_DIALOG: {
-    		if (thread.state == SendMsgThread.State.AUTHENTICATE_NEED_CONFIRM)
-    		{
-    			Debugger.d( "thread state=" + thread.state.toString());
-    			switch (resultCode) {
-    			case RESULT_OK: {
-		    		Bundle bundle = data.getExtras();
-		    		thread.verification.code = bundle.getString("code");
-		    		Debugger.d( "wake up thread");
-		    		synchronized(thread) {
-		    			thread.notify();
-		    		}
-		    		break;
-    			}
-		    	default:
-		    		Debugger.e( "pic verify destroyed");
-		    		thread.stop();
-		    		break;
-    			}
+    		if (resultCode == RESULT_OK) {
+    			Bundle bundle = data.getExtras();
+	    		thread.verification.code = bundle.getString("code"); 
+    			thread.addCommand(Command.AUTHENTICATE, null);
     		}
     		break;
     	}
+    	
     	default: 
     		break;
     	}

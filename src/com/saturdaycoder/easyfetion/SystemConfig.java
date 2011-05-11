@@ -160,6 +160,7 @@ public class SystemConfig {
 	public void initDownload() throws IOException 
 	{
 		socket = new Socket(navHostIp, 80);
+		socket.setSoTimeout(5000);
 		os = socket.getOutputStream();
 		is = socket.getInputStream();
 		resp = null;

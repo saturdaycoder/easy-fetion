@@ -6,7 +6,7 @@
     
     >
 <TextView 
-    android:text="若登录的飞信号码不是本机号码，好友的消息会以短信形式被发送到飞信号码所在手机上(因为为了节省流量，飞信没有保持在线)。在接下来的版本中将让用户选择是否让该类消息直接发到本机。" 
+    android:text="如果登录的飞信号码和本手机号码不符，本手机不会接收飞信消息，而是由飞信号码所在手机以短信形式接收消息。我正在考虑是否让用户选择把该类消息直接收到本手机。" 
     android:id="@+id/textView1" 
     android:layout_width="wrap_content" 
     android:layout_height="wrap_content"

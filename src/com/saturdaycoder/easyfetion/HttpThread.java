@@ -69,21 +69,27 @@ public class HttpThread extends Thread {
         OutputStream pOs = null;
         try { 
 	        pSocket = new Socket(sysConfig.portraitServersName, 80);
+	        pSocket.setSoTimeout (2000);
 	        pIs = pSocket.getInputStream();
 	        pOs = pSocket.getOutputStream();
 	    } catch (Exception e) {
-	    	notifyState(State.NETWORK_DOWN);
+	    	notifyState(State.GET_PORTRAIT_FAIL);
 	    	Debugger.e( "creating socket for loading portraits failed: " + e.getMessage());
 	    	return;
 	    }
 	    Iterator<String> iter = contactList.keySet().iterator();
-	    FetionHttpMessageParser p = new FetionHttpMessageParser();
+	    //FetionHttpMessageParser p = new FetionHttpMessageParser();
         while (iter.hasNext())
         {
         	notifyState(State.GET_PORTRAIT_GETTING);
         	String uri = iter.next();
         	FetionContact fc = contactList.get(uri);
         	doGetPortrait(fc, pIs, pOs);
+        }
+        try {
+        	pSocket.close();
+        } catch (Exception e) {
+        	
         }
         notifyState(State.GET_PORTRAIT_SUCC);
     }
@@ -99,11 +105,22 @@ public class HttpThread extends Thread {
     		Debugger.d( "sent request: " + req.toString());
         	FetionHttpResponse res = (FetionHttpResponse)p.parse(is);
         	if (res != null) {
-        		Debugger.d( "received response: " + res.toString());
+        		//Debugger.d( "received response: " + res.toString());
         	}
         	if (res != null && res.getResponseCode() == 200) {
         		fc.portrait = res.body;
+        		byte b[] = fc.portrait.getBytes();
+        		String s = "";
+        		/*for (int i = 0; i < b.length; ++i) {
+        			s += String.format("%08X ", b[i]);
+        		}*/
+        		
         		Debugger.d( "successfully got portrait for " + fc.sipUri);
+        		Debugger.i(s.substring(0, 3000));
+        	}
+        	if (res != null && res.getResponseCode() == 404) {
+        		fc.portrait = null;
+        		//Debugger.d( "successfully got portrait for " + fc.sipUri);
         	}
     	} catch (Exception e) {
     		Debugger.e( "loading portrait for " + fc.sipUri + " failed: " + e.getMessage());
@@ -111,6 +128,8 @@ public class HttpThread extends Thread {
         
         
     }
+    
+    
     
     private class WorkHandler extends Handler {
     	@Override

@@ -57,6 +57,9 @@ public class MsgHistory extends Activity
 		editMsgText = (EditText)findViewById(R.id.editMsgText);
 		lvMsgList = (ListView)findViewById(R.id.lvMsgList);
 		
+		sysConfig = SystemConfig.getInstance();
+		crypto = Crypto.getInstance();
+		
 		receiver = new SmsReceiver();
 		uiHandler = new SendMsgUiHandler();
 		thread = new SipcThread(sysConfig, crypto, null, uiHandler);
@@ -184,6 +187,7 @@ public class MsgHistory extends Activity
 						+ ": " + fm.msg);
 				loadMsgList();
 				thread.addCommand(Command.DROP, fm);
+				editMsgText.setText("");
 				break;
 			}
 			case SEND_MSG_SUCC_SMS: {
@@ -191,6 +195,7 @@ public class MsgHistory extends Activity
 				popNotify("successfully sent msg via SMS to " + fm.contact.nickName
 						+ ": " + fm.msg);
 				loadMsgList();
+				editMsgText.setText("");
 				thread.addCommand(Command.DROP, fm);
 				break;
 			}
@@ -249,7 +254,7 @@ public class MsgHistory extends Activity
 	@Override
 	protected void onStart() {
 		super.onStart();
-		crypto = Crypto.getInstance();
+		
 		Debugger.d( "loading sms list of " + mobileno);
 		
     	IntentFilter filter = new IntentFilter();
@@ -260,9 +265,6 @@ public class MsgHistory extends Activity
 		
 		
 		loadMsgList();
-		//uiHandler = new SendMsgUiHandler();
-		sysConfig = SystemConfig.getInstance();
-		
 	}
 	
 	@Override
@@ -289,13 +291,13 @@ public class MsgHistory extends Activity
 		smsList = SmsDbAdapter.getSmsList(mobileno);
 		ArrayList<HashMap<String, Object>> listItem = new ArrayList<HashMap<String, Object>>(); 
 		ArrayList<Integer> backcolor = new ArrayList<Integer>();
-		ArrayList<Integer> frontcolor = new ArrayList<Integer>();
+		
 		for (int i = 0; i < smsList.size(); ++i) {
 			int type = smsList.get(i).type;
 			long date = smsList.get(i).date;
 			String body = smsList.get(i).body;
 			
-			String smstext = ((type == 1)? "<0>": "<1>我: " )
+			String smstext = ((type == 1)? "": "我: " )
 					+body;
 			String timetext = DateFormat.format("yy-MM-dd kk:mm:ss", date).toString();
 			
@@ -304,13 +306,13 @@ public class MsgHistory extends Activity
 		    map.put("MsgText", smstext); 
 		    map.put("TimeText", timetext); 
 		    listItem.add(map); 
-		    frontcolor.add(0x00000000);
-		    backcolor.add((type == 1)? 0x008080FF: 0x00FFFFFF);
+		    
+		    backcolor.add((type == 1)? R.drawable.skyblue: R.drawable.grey);
 		} 
 		MsgListAdapter listItemAdapter = new MsgListAdapter(MsgHistory.this,
 			listItem,
 			
-			frontcolor,
+			
 			backcolor,
 			
 		    R.layout.msglistitem,
@@ -345,7 +347,7 @@ public class MsgHistory extends Activity
 				
 				
 				boolean hasThisContact = false;
-				
+				boolean hasOtherContact = false;
 				if (bundle != null) {
 					Object[] objpdus = (Object[])bundle.get("pdus");
 					
@@ -358,8 +360,7 @@ public class MsgHistory extends Activity
 						Debugger.d( "received sms from " + addr);
 						if (addr.equals(mobileno)) {
 							hasThisContact = true;
-							//abortBroadcast();
-					        //setResultData(null);
+
 							SmsDbAdapter.insertReceivedSms(mobileno, date, body);
 							try {
 								vb.vibrate(new long[] {
@@ -372,17 +373,18 @@ public class MsgHistory extends Activity
 							}
 					    }
 						else {
-							newobjpdus.add(objpdus[i]);
+							hasOtherContact = true;
 						}
 					}
 
 				}
 				
 				if (hasThisContact) {
-					//bundle.put
 					loadMsgList();
-					//abortBroadcast();
-			        //setResultData(null);
+				}
+				if (!hasOtherContact) {
+					abortBroadcast();
+			        setResultData(null);
 				}
 			}
 		}

@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.saturdaycoder.easyfetion.HttpThread.Command;
+import com.saturdaycoder.easyfetion.HttpThread.State;
 
 import android.os.Handler;
 import android.content.res.*;
@@ -107,7 +108,9 @@ public class EasyFetion extends Activity
     		case REGISTER_SENDING:
     		case REGISTER_READING:
     		case REGISTER_POSTPROCESSING:
+    			break;
     		case REGISTER_FAIL:
+    			refreshThread.addCommand(SipcThread.Command.DISCONNECT_SIPC, null);
     			break;
     		case REGISTER_SUCC:
 
@@ -136,6 +139,7 @@ public class EasyFetion extends Activity
 	    		refreshThread.addCommand(SipcThread.Command.GET_CONTACTS, null);
 	    		break;
     		case AUTHENTICATE_FAIL:
+    			refreshThread.addCommand(SipcThread.Command.DISCONNECT_SIPC, null);
     			dismissDialog(DIALOG_REFRESH_PROGRESS);
 				showerr(TAG, "authenticate failed. try again");
 				break;
@@ -143,10 +147,13 @@ public class EasyFetion extends Activity
     		case CONTACT_GETTING:
     			break;
     		case CONTACT_GET_SUCC: {
-				dismissDialog(DIALOG_REFRESH_PROGRESS);
+				
+				
+				loginThread.addCommand(HttpThread.Command.GET_PORTRAIT, contactList);
 				FetionDatabase.getInstance().setUserInfo(sysConfig);
 				
 				loadContactList();
+				dismissDialog(DIALOG_REFRESH_PROGRESS);
 				Iterator<String> iter = contactList.keySet().iterator();
         		while (iter.hasNext()) {
         			String uri = iter.next();
@@ -166,6 +173,7 @@ public class EasyFetion extends Activity
 				break;
 			}
     		case CONTACT_GET_FAIL:
+    			refreshThread.addCommand(SipcThread.Command.DROP, null);
     			dismissDialog(DIALOG_REFRESH_PROGRESS);
     			showerr(TAG, "Failed to get contact list");
     			break;
@@ -173,8 +181,10 @@ public class EasyFetion extends Activity
     		case DROP_SENDING:
     		case DROP_READING:
     		case DROP_POSTPROCESSING:
+    			break;
     		case DROP_FAIL:
     		case DROP_SUCC:
+    			refreshThread.addCommand(SipcThread.Command.DISCONNECT_SIPC, null);
     			break;
     		case THREAD_EXIT:
     			break;
@@ -240,9 +250,18 @@ public class EasyFetion extends Activity
 				break;
 			}
 			case LOGIN_FAIL: 
-				dismissDialog(INTENT_ACC_SET_DIALOG);
-				showerr(TAG, "Login failed. input your account again");
-
+				try {
+					dismissDialog(DIALOG_LOGIN_PROGRESS);
+					showerr(TAG, "Login failed. input your account again");
+				} catch (Exception e) {
+					
+				}
+				try {
+					dismissDialog(DIALOG_REFRESH_PROGRESS);
+					showerr(TAG, "Password/account error");
+				} catch (Exception e) {
+					
+				}
 				break;
 			case LOGIN_SUCC: 
 				FetionDatabase.getInstance().setAccount(sysConfig);
@@ -251,9 +270,14 @@ public class EasyFetion extends Activity
 	    		loginThread.addCommand(Command.DOWNLOAD_CONFIG, null);
 				break;	
 			case CONFIG_DOWNLOAD_SUCC:
-				dismissDialog(INTENT_ACC_SET_DIALOG);
+				try {
+					dismissDialog(DIALOG_LOGIN_PROGRESS);
+					showerr(TAG, "Congratulations! Your ass is mine!!");
+				} catch (IllegalArgumentException e) {
+					
+				}
 				FetionDatabase.getInstance().setUserInfo(sysConfig);
-				showerr(TAG, "Congratulations! Your ass is mine!!");
+				
 				
 				showDialog(DIALOG_REFRESH_PROGRESS);
 				sysConfig.contactVersion = "0";
@@ -266,6 +290,48 @@ public class EasyFetion extends Activity
 				break;
 			case NETWORK_DOWN:
 				showerr(TAG, "Network error!!");
+				break;
+			case GET_PORTRAIT_FAIL:
+				refreshThread.addCommand(SipcThread.Command.DROP, null);
+				showerr(TAG, "getting portrait failed");
+				break;
+			case GET_PORTRAIT_SUCC:
+				refreshThread.addCommand(SipcThread.Command.DROP, null);
+				Iterator<String> iter = contactList.keySet().iterator();
+			    while (iter.hasNext())
+		        {
+		        	String uri = iter.next();
+		        	FetionContact fc = contactList.get(uri);
+		        	if (fc.portrait == null) {
+		        		// if the portrait is null, delete existing portrait 
+		        		// picture if it exists
+	        			File f = new File("/data/data/com.saturdaycoder.easyfetion/files/" + fc.userId + ".JPG");
+	        			if (f.exists()) {
+	        				Debugger.d("delete should-not-exist portrait: " 
+	        						+ fc.userId + ".JPG");
+	        				f.delete();
+	        			}
+		        		
+		        	}
+		        	else if (fc.portrait.equals("")) {
+		        		// portrait is just not downloaded; it may exists so I 
+		        		// don't delete the picture file
+		        	}
+		        	else {
+		        		// if portrait is downloaded, write it to file
+						try{
+							FileOutputStream fos = openFileOutput(fc.userId + ".JPG", Context.MODE_PRIVATE);
+							fos.write(fc.portrait.getBytes(), 0, fc.portrait.getBytes().length);
+							fos.close();
+							//Debugger.d( "portrait " + c.sId + " wrote succeeded");
+					    } catch(Exception e) {
+					       //e.printStackTrace();
+					       Debugger.e( ".nomedia mark wrote failed: " + e.getMessage());
+					    }
+		        	}
+		        }
+				loadContactList();
+				showerr(TAG, "getting portrait succeeded");
 				break;
 			default:
 				break;
@@ -483,20 +549,12 @@ public class EasyFetion extends Activity
 		    try {
 		    	fis = openFileInput(potraitfile);
 		    } catch (FileNotFoundException e) {
-		    	//Debugger.e( "contact " + c.sipUri + " has no portrait");
 		    }
 		    if (fis == null) {
-		    	
 		    	map.put("FetionImage", R.drawable.icon);
 		    	Debugger.d( "contact " + c.sipUri + " has no portrait");
 		    } else {
-		    	Bitmap bmp = BitmapFactory.decodeFile(potraitfile);
-		    	ImageView i = new ImageView(this);
-		    	i.setImageBitmap(bmp);
-		    	//map.put("FetionImage", bmp);
-		    	//map.put("FetionImage", i);
-		    	//map.put("FetionImage", "file:///data/data/com.saturdaycoder.quickfetion/files/" + potraitfile);
-		    	map.put("FetionImage", R.drawable.icon);
+		    	map.put("FetionImage", "/data/data/com.saturdaycoder.easyfetion/files/" + potraitfile);
 		    	Debugger.e( "contact " + c.sipUri + " HAS portrait");
 		    }
 		    map.put("FetionNickName", nn); 
@@ -613,13 +671,13 @@ public class EasyFetion extends Activity
 				startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
                 break;  
             case MENU_REFRESH_ID:  
+            	sysConfig.sId = "";
+				sysConfig.userId = "";
 				showDialog(DIALOG_REFRESH_PROGRESS);
 				FetionDatabase.getInstance().clearContacts();
 	    		sysConfig.contactVersion = "0";
-	    		if (!refreshThread.isAlive()) {
-	    			refreshThread.start();
-				}
-	    		refreshThread.addCommand(SipcThread.Command.CONNECT_SIPC, null);
+    		
+				loginThread.addCommand(Command.LOGIN, null);
                 break;  
             case MENU_ABOUT_ID:  
                 showerr(TAG, "This client is fucking awesome!");  

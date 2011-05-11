@@ -39,7 +39,7 @@ public class Network {
 		
 		if (sipcSocket == null) {
 			sipcSocket = new Socket(ip, port);
-			sipcSocket.setSoTimeout (10000);
+			sipcSocket.setSoTimeout (5000);
 			is = sipcSocket.getInputStream();
 			os = sipcSocket.getOutputStream();
 		}

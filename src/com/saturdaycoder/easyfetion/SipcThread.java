@@ -142,17 +142,13 @@ public class SipcThread extends Thread{
     private void doConnectSipc(Object arg) {
     	notifyState(State.CONNECTING_SIPC, arg);
         try {
-        	Debugger.d("connecting " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
         	Network.closeSipcSocket();
-        	
         	Network.createSipcSocket(sysConfig.sipcProxyIp, sysConfig.sipcProxyPort);
         	is = Network.getSipcInputStream();
-        	Debugger.d("got SIPC inputstream");
         	os = Network.getSipcOutputStream();
         	notifyState(State.CONNECTING_SUCC, arg);
         } catch (Exception e) {
-        	Debugger.e( "error re-create sipc socket: ");// + e.getMessage());
-        	e.printStackTrace();
+        	Debugger.e( "error re-create sipc socket: " + e.getMessage());
         	notifyState(State.CONNECTING_FAIL, arg);
         }
     }
@@ -174,17 +170,6 @@ public class SipcThread extends Thread{
         
         RegisterSession reg = new RegisterSession(sysConfig, crypto, is, os);
         notifyState(State.REGISTER_SENDING, arg);
-        
-        /*Debugger.d("start blocking read");
-        byte b[] = new byte[1024];
-        try {
-        	int c = Network.getSipcInputStream().read(b);
-        	Debugger.d("read " + c + "bytes");
-        } catch (java.net.SocketTimeoutException e) {
-        	Debugger.e("error message: " + e.getMessage());
-        } catch (IOException e) {
-        	
-        }*/
         
         try {
         	reg.send();

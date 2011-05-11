@@ -142,8 +142,9 @@ public class SipcThread extends Thread{
     private void doConnectSipc(Object arg) {
     	notifyState(State.CONNECTING_SIPC, arg);
         try {
-        	Network.closeSipcSocket();
         	Debugger.d("connecting " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
+        	Network.closeSipcSocket();
+        	
         	Network.createSipcSocket(sysConfig.sipcProxyIp, sysConfig.sipcProxyPort);
         	is = Network.getSipcInputStream();
         	Debugger.d("got SIPC inputstream");

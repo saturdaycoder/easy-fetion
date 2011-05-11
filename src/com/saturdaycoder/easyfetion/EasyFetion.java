@@ -85,7 +85,8 @@ public class EasyFetion extends Activity
     	@Override
         public void handleMessage(Message msg) 
 		{
-    		SipcThread.State state = (SipcThread.State)msg.obj;
+    		SipcThread.ThreadState ts = (SipcThread.ThreadState)msg.obj;
+    		SipcThread.State state = ts.state;
     		Debugger.v( "received reports of state: " + state.toString());
     		switch (state) {
     		case INIT:

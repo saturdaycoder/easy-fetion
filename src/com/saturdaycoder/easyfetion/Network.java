@@ -5,7 +5,6 @@ import java.net.*;
 import android.app.*;
 import android.net.wifi.*;
 import android.content.*;
-import java.io.IOException;
 import java.io.*;
 import android.telephony.*;
 public class Network {
@@ -57,13 +56,15 @@ public class Network {
 	}
 	public static void closeSipcSocket() throws IOException 
 	{
-		Debugger.d( "SIPC socket is CLOSED");
-		if (sipcSocket != null) {
+		
+		if (sipcSocket != null && sipcSocket.isConnected()) {
+			Debugger.d("closing SIPC socket");
 			sipcSocket.close();
 			sipcSocket = null;
 			is = null;
 			os = null;
 		}
+		Debugger.d( "SIPC socket is CLOSED");
 	}
 	
 	public static void setActivity(Activity activity) {

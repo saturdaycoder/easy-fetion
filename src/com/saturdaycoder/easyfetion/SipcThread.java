@@ -143,12 +143,15 @@ public class SipcThread extends Thread{
     	notifyState(State.CONNECTING_SIPC, arg);
         try {
         	Network.closeSipcSocket();
+        	Debugger.d("connecting " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
         	Network.createSipcSocket(sysConfig.sipcProxyIp, sysConfig.sipcProxyPort);
         	is = Network.getSipcInputStream();
+        	Debugger.d("got SIPC inputstream");
         	os = Network.getSipcOutputStream();
         	notifyState(State.CONNECTING_SUCC, arg);
         } catch (Exception e) {
-        	Debugger.e( "error re-create sipc socket: " + e.getMessage());
+        	Debugger.e( "error re-create sipc socket: ");// + e.getMessage());
+        	e.printStackTrace();
         	notifyState(State.CONNECTING_FAIL, arg);
         }
     }

@@ -62,6 +62,14 @@ public class FetionContact {
 			return "12520" + getFetionNumber();
 		}
 		else { 
+			return /*"12520" + */mobileNumber;
+		}
+	}
+	public String getMsgNumber() {
+		if (mobileNumber.equals("")) {
+			return "12520" + getFetionNumber();
+		}
+		else { 
 			return "12520" + mobileNumber;
 		}
 	}

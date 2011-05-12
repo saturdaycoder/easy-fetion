@@ -2,6 +2,7 @@ package com.saturdaycoder.easyfetion;
 
 public class FetionHttpMessage extends HttpStyleMessage
 {
+	public byte[] bodybytes;
 	public int getContentLength()
 	{
 		int c = -1;

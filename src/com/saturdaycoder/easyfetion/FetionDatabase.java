@@ -1,6 +1,8 @@
 package com.saturdaycoder.easyfetion;
 //import android.content.ContentValues;
 import android.content.Context;
+
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import android.database.Cursor;
 //import android.database.SQLException;
@@ -10,12 +12,27 @@ import android.database.sqlite.SQLiteDatabase;
 
 public class FetionDatabase extends SQLiteOpenHelper  
 {
-	
+	private Context context;
 	private static final String DATABASE_NAME = "userdb";
 	private static final int DB_VERSION = 1;
 	private static final boolean encryptUserPasswd = true;
 	protected FetionDatabase(Context context) {
 		super(context, DATABASE_NAME, null, DB_VERSION);
+		this.context = context;
+	}
+	public void savePortrait(String filename, byte[] data)
+			throws java.io.FileNotFoundException, java.io.IOException
+	{
+		
+		FileOutputStream fos = context.openFileOutput(filename, 
+				Context.MODE_PRIVATE);
+		
+		fos.write(data, 0, data.length);
+		try {
+			fos.close();
+		} catch (java.io.IOException e) {
+			
+		}
 	}
 	
 	protected static FetionDatabase instance = null;

@@ -20,7 +20,7 @@ import android.os.Vibrator;
 import com.saturdaycoder.easyfetion.SipcThread.Command;
 import com.saturdaycoder.easyfetion.SipcThread.State;
 import com.saturdaycoder.easyfetion.SipcThread.ThreadState;
-
+import android.view.*;
 public class MsgHistory extends Activity
 {
 	private Intent intent;
@@ -30,6 +30,7 @@ public class MsgHistory extends Activity
 	private EditText editMsgText;
 	private ListView lvMsgList;
 	private String mobileno = null; 
+	private String msgno = null;
 	private Crypto crypto;
 	private SystemConfig sysConfig;
 	private Handler uiHandler;
@@ -50,7 +51,19 @@ public class MsgHistory extends Activity
 		intent = this.getIntent();
 		bundle = intent.getExtras();
 		mobileno = bundle.getString("mobileno");
+		msgno = bundle.getString("msgno");
 		nickname = bundle.getString("nickname");
+		
+		//WindowManager winManager=(WindowManager)getSystemService(Context.WINDOW_SERVICE);
+		//int width = getWindow().getDecorView().getWidth();
+		
+		this.setTitle(nickname);
+		//this.setTitle("与" + nickname + "(" + mobileno + ")聊天");
+		//int newwidth = getWindow().getDecorView().getWidth();
+		
+		
+		//Debugger.e("orig width=" +width + " new =" + newwidth);
+		
 		sipuri = bundle.getString("sipuri");
 		
 		btnSend = (Button)findViewById(R.id.btnSendMsg);
@@ -233,7 +246,14 @@ public class MsgHistory extends Activity
     @Override
     protected void onResume() {
 
-    	
+    	//int width = getWindow().getDecorView().getWidth();
+		
+		
+		//this.setTitle("与" + nickname + "(" + mobileno + ")聊天");
+		//int newwidth = getWindow().getDecorView().getWidth();
+		
+		
+		//Debugger.e("orig width=" +width + " new =" + newwidth);
     	loadMsgList();
     	super.onResume();
     	
@@ -358,7 +378,7 @@ public class MsgHistory extends Activity
 						long date = sms.getTimestampMillis();
 						String body = sms.getMessageBody();
 						Debugger.d( "received sms from " + addr);
-						if (addr.equals(mobileno)) {
+						if (/*addr.equals(mobileno) || */addr.equals(msgno)) {
 							hasThisContact = true;
 
 							SmsDbAdapter.insertReceivedSms(mobileno, date, body);
@@ -383,6 +403,7 @@ public class MsgHistory extends Activity
 					loadMsgList();
 				}
 				if (!hasOtherContact) {
+					Debugger.e( "do not stop sms propagation because of other contact");
 					abortBroadcast();
 			        setResultData(null);
 				}

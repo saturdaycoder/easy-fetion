@@ -13,6 +13,7 @@ import android.os.Message;
 import android.widget.Toast;
 import android.widget.AdapterView.*;
 import android.widget.AdapterView;
+import android.telephony.TelephonyManager;
 import android.view.View;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import android.net.*;
 
 import com.saturdaycoder.easyfetion.HttpThread.Command;
 import com.saturdaycoder.easyfetion.HttpThread.State;
@@ -297,12 +299,13 @@ public class EasyFetion extends Activity
 				break;
 			case GET_PORTRAIT_SUCC:
 				refreshThread.addCommand(SipcThread.Command.DROP, null);
-				Iterator<String> iter = contactList.keySet().iterator();
+				/*Iterator<String> iter = contactList.keySet().iterator();
 			    while (iter.hasNext())
 		        {
 		        	String uri = iter.next();
 		        	FetionContact fc = contactList.get(uri);
 		        	if (fc.portrait == null) {
+		        		Debugger.d("user " + fc.userId+"has no portrait");
 		        		// if the portrait is null, delete existing portrait 
 		        		// picture if it exists
 	        			File f = new File("/data/data/com.saturdaycoder.easyfetion/files/" + fc.userId + ".JPG");
@@ -316,20 +319,14 @@ public class EasyFetion extends Activity
 		        	else if (fc.portrait.equals("")) {
 		        		// portrait is just not downloaded; it may exists so I 
 		        		// don't delete the picture file
+		        		Debugger.d("portrait of " + fc.userId + " not downloaded");
 		        	}
 		        	else {
 		        		// if portrait is downloaded, write it to file
-						try{
-							FileOutputStream fos = openFileOutput(fc.userId + ".JPG", Context.MODE_PRIVATE);
-							fos.write(fc.portrait.getBytes(), 0, fc.portrait.getBytes().length);
-							fos.close();
-							//Debugger.d( "portrait " + c.sId + " wrote succeeded");
-					    } catch(Exception e) {
-					       //e.printStackTrace();
-					       Debugger.e( ".nomedia mark wrote failed: " + e.getMessage());
-					    }
+		        		Debugger.d("write portrait of " + fc.userId);
+						
 		        	}
-		        }
+		        }*/
 				loadContactList();
 				showerr(TAG, "getting portrait succeeded");
 				break;
@@ -403,16 +400,16 @@ public class EasyFetion extends Activity
     			intent.setClass(EasyFetion.this, MsgHistory.class);
     			Bundle bundle = new Bundle();
     			bundle.putString("mobileno", contactList.get(uri).getSmsNumber());
+    			bundle.putString("msgno", contactList.get(uri).getMsgNumber());
     			bundle.putString("nickname", contactList.get(uri).getDisplayName());
     			bundle.putString("sipuri", contactList.get(uri).sipUri);
     			intent.putExtras(bundle);
     			startActivity(intent);
-        		
-        		//selectedContacts.add(worker.contactList.get(uri));
-        		//showerr(TAG, "selected contact " + worker.contactList.get(uri).nickName);
-        		//}
         	}
         });
+        
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        Debugger.e("Network " + cm.getActiveNetworkInfo().getTypeName() + " detail: " + cm.getActiveNetworkInfo().getSubtypeName());
 
     }
     
@@ -551,7 +548,7 @@ public class EasyFetion extends Activity
 		    } catch (FileNotFoundException e) {
 		    }
 		    if (fis == null) {
-		    	map.put("FetionImage", R.drawable.icon);
+		    	map.put("FetionImage", R.drawable.contact_default);//R.drawable.icon);
 		    	Debugger.d( "contact " + c.sipUri + " has no portrait");
 		    } else {
 		    	map.put("FetionImage", "/data/data/com.saturdaycoder.easyfetion/files/" + potraitfile);

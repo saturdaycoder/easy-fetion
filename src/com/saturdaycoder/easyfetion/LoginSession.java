@@ -24,7 +24,7 @@ public class LoginSession {
 		this.sysConfig = sysConfig;
 		SSLSocketFactory sslsf = (SSLSocketFactory)SSLSocketFactory.getDefault();
 		socket = (SSLSocket)sslsf.createSocket(SystemConfig.ssiHostIp, 443);
-		socket.setSoTimeout(5000);
+		socket.setSoTimeout(10000);
 		os = socket.getOutputStream();
 		is = socket.getInputStream();
 	}

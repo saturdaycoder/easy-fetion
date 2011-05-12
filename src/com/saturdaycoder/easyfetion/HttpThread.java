@@ -105,22 +105,25 @@ public class HttpThread extends Thread {
     		Debugger.d( "sent request: " + req.toString());
         	FetionHttpResponse res = (FetionHttpResponse)p.parse(is);
         	if (res != null) {
-        		//Debugger.d( "received response: " + res.toString());
+        		Debugger.d( "received response: " + res.toString());
         	}
         	if (res != null && res.getResponseCode() == 200) {
-        		fc.portrait = res.body;
-        		byte b[] = fc.portrait.getBytes();
-        		String s = "";
-        		/*for (int i = 0; i < b.length; ++i) {
-        			s += String.format("%08X ", b[i]);
-        		}*/
-        		
+        		//fc.portrait = res.body;
+        		byte[] b = res.bodybytes;
+				java.math.BigInteger bi = new java.math.BigInteger(1, b);
+			    String hex = String.format("%0" + (b.length << 1) + "X", bi);
+				Debugger.d("hex is " + hex);
+				
+        		FetionDatabase.getInstance().savePortrait(fc.userId + ".JPG", res.bodybytes);
         		Debugger.d( "successfully got portrait for " + fc.sipUri);
-        		Debugger.i(s.substring(0, 3000));
+        		
         	}
-        	if (res != null && res.getResponseCode() == 404) {
-        		fc.portrait = null;
-        		//Debugger.d( "successfully got portrait for " + fc.sipUri);
+        	else if (res != null && res.getResponseCode() == 404) {
+        		//fc.portrait = null;
+        		Debugger.d( "no portrait for " + fc.sipUri);
+        	}
+        	else {
+        		Debugger.d( "portrait for " + fc.sipUri + " ERROR");
         	}
     	} catch (Exception e) {
     		Debugger.e( "loading portrait for " + fc.sipUri + " failed: " + e.getMessage());

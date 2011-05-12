@@ -35,14 +35,27 @@ public class Network {
 	public static void createSipcSocket(String ip, int port) throws IOException
 	{
 		
-		Debugger.d( "SIPC socket is CREATED");
+		Debugger.d("SIPC connect to " + ip + ":" + port);
 		
-		if (sipcSocket == null) {
+		if (sipcSocket == null || sipcSocket.isClosed()) {
 			sipcSocket = new Socket(ip, port);
-			sipcSocket.setSoTimeout (5000);
+			sipcSocket.setSoTimeout (15000);
+			//sipcSocket.setSoLinger(false, 0);
 			is = sipcSocket.getInputStream();
 			os = sipcSocket.getOutputStream();
+			
 		}
+		/*else if (!sipcSocket.isConnected()) {
+			InetSocketAddress addr = new InetSocketAddress(ip, port);
+			sipcSocket.connect(addr);
+			sipcSocket.setSoTimeout (15000);
+			//sipcSocket.setSoLinger(false, 0);
+			is = sipcSocket.getInputStream();
+			os = sipcSocket.getOutputStream();
+			Debugger.d("sipc linger = " + sipcSocket.getSoLinger());
+		}*/
+		Debugger.d("sipc linger = " + sipcSocket.getSoLinger());
+		Debugger.d( "SIPC socket is CREATED");
 	}
 	public static InputStream getSipcInputStream() throws IOException
 	{
@@ -58,9 +71,11 @@ public class Network {
 	{
 		
 		if (sipcSocket != null && sipcSocket.isConnected()) {
+			Debugger.d("sipc linger = " + sipcSocket.getSoLinger());
 			Debugger.d("closing SIPC socket");
 			sipcSocket.close();
 			sipcSocket = null;
+			//sipcSocket.setKeepAlive(false);
 			is = null;
 			os = null;
 		}

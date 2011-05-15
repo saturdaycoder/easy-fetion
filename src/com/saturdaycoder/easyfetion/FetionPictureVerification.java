@@ -103,7 +103,7 @@ public class FetionPictureVerification
 			Node nId = n.getAttributes().getNamedItem("id");
 			Node nPic = n.getAttributes().getNamedItem("pic");
 			if (nId == null || nPic == null) {
-				Debugger.e( "error getting element id and pic");
+				Debugger.error( "error getting element id and pic");
 				return null;
 			}
 			this.guid = nId.getNodeValue();
@@ -114,7 +114,7 @@ public class FetionPictureVerification
 	
 			return this.pic_base64.getBytes();
 		} catch (Exception e) {
-			Debugger.e( "error geting auth pic: " + e.getMessage());
+			Debugger.error( "error geting auth pic: " + e.getMessage());
 			return null;
 		}
 	}

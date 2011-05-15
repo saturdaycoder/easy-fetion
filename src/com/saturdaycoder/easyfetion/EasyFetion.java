@@ -62,7 +62,7 @@ public class EasyFetion extends Activity
     private void showerr(String TAG, String msg)
     {
     	popNotify(msg);
-    	Debugger.e( msg);
+    	Debugger.error( msg);
     }
     
     private void popNotify(String msg)
@@ -79,7 +79,7 @@ public class EasyFetion extends Activity
 		{
     		SipcThread.ThreadState ts = (SipcThread.ThreadState)msg.obj;
     		SipcThread.State state = ts.state;
-    		Debugger.v( "received reports of state: " + state.toString());
+    		Debugger.verbose( "received reports of state: " + state.toString());
     		switch (state) {
     		case INIT:
     		case CONNECTING_SIPC:
@@ -160,7 +160,7 @@ public class EasyFetion extends Activity
 					//Debugger.d( "portrait " + c.sId + " wrote succeeded");
 			    } catch(Exception e) {
 			       //e.printStackTrace();
-			       Debugger.e( ".nomedia mark wrote failed: " + e.getMessage());
+			       Debugger.error( ".nomedia mark wrote failed: " + e.getMessage());
 			    }
 				showerr(TAG, "成功地获取到联系人列表啦！");
 				break;
@@ -207,7 +207,7 @@ public class EasyFetion extends Activity
 		{
     		HttpThread.State state = (HttpThread.State)msg.obj;
 			
-			Debugger.v( "received reports of state: " + state.toString());
+			Debugger.verbose( "received reports of state: " + state.toString());
 			
 			switch (state) {
 			case LOGIN_NEED_CONFIRM: {			
@@ -296,7 +296,7 @@ public class EasyFetion extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-    	Debugger.d( "QUICKFETION ONCREATE");
+    	Debugger.debug( "QUICKFETION ONCREATE");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -325,7 +325,7 @@ public class EasyFetion extends Activity
         	@Override
         	public void onItemClick(AdapterView<?> a, View v, int position, long id) 
         	{
-        		Debugger.d( "lvcontacts onitemclick");
+        		Debugger.debug( "lvcontacts onitemclick");
         		Iterator<String> iter = contactList.keySet().iterator();
         		int i = -1;
         		String uri = "";
@@ -351,36 +351,36 @@ public class EasyFetion extends Activity
         });
         
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        Debugger.e("Network " + cm.getActiveNetworkInfo().getTypeName() + " detail: " + cm.getActiveNetworkInfo().getSubtypeName());
+        Debugger.error("Network " + cm.getActiveNetworkInfo().getTypeName() + " detail: " + cm.getActiveNetworkInfo().getSubtypeName());
 
     }
     
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-    	Debugger.d( "onActivityResult: " + requestCode + ", " + resultCode );
+    	Debugger.debug( "onActivityResult: " + requestCode + ", " + resultCode );
     	switch (requestCode) {
     	case INTENT_ACC_SET_DIALOG: {
     		if (resultCode == RESULT_OK) {
 	    		Bundle bundle = data.getExtras();
 	    		if (!bundle.containsKey("mobileno")) {
-	    			Debugger.e( "not contain mobileno");
+	    			Debugger.error( "not contain mobileno");
 	    		}
 	    		sysConfig.mobileNumber = bundle.getString("mobileno");
 	    		sysConfig.userPassword = bundle.getString("passwd");
 	    		lastLoginAcc = sysConfig.mobileNumber;
 	    		if (sysConfig.mobileNumber == null || sysConfig.userPassword == null) {
-	    			Debugger.e( "retrieving user account:" + 
+	    			Debugger.error( "retrieving user account:" + 
 	    					sysConfig.mobileNumber + ", " + sysConfig.userPassword);
 	    		}
 	
 	    		showDialog(DIALOG_LOGIN_PROGRESS);
 	    		
 				loginThread.addCommand(Command.LOGIN, null);
-	    		Debugger.v( "Dialog created and returned");
+	    		Debugger.verbose( "Dialog created and returned");
     		}
     		else {
-    			Debugger.d( "dialog canceled");
+    			Debugger.debug( "dialog canceled");
     		}
     		break;
     	}
@@ -395,7 +395,7 @@ public class EasyFetion extends Activity
 		    		break;
     			}
 		    	default:
-		    		Debugger.e( "pic verify destroyed");
+		    		Debugger.error( "pic verify destroyed");
 		    		dismissDialog(DIALOG_LOGIN_PROGRESS);
 		    		break;
     			}
@@ -403,7 +403,7 @@ public class EasyFetion extends Activity
     		break;
     	}
     	case INTENT_PIC_VERIFY_DIALOG_FOR_AUTHENTICATE: {
-    		Debugger.d( "refreshThread state = " + refreshThread.state.ordinal());
+    		Debugger.debug( "refreshThread state = " + refreshThread.state.ordinal());
     		if (refreshThread != null && (refreshThread.state == SipcThread.State.AUTHENTICATE_NEED_CONFIRM)) {
     			switch (resultCode) {
     			case RESULT_OK: {
@@ -428,7 +428,7 @@ public class EasyFetion extends Activity
     @Override
     protected void onStart()
     {
-    	Debugger.i( "QUICKFETION ONSTART");
+    	Debugger.info( "QUICKFETION ONSTART");
     	super.onStart();
     	
     	sysConfig = SystemConfig.getInstance();//new SystemConfig();
@@ -447,7 +447,7 @@ public class EasyFetion extends Activity
     	else {
     		lastLoginAcc = sysConfig.mobileNumber;
     		FetionDatabase.getInstance().getUserInfo(sysConfig);
-    		Debugger.d( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
+    		Debugger.debug( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
     		if (sysConfig.sipcProxyIp == "" || sysConfig.sipcProxyPort == -1) {
 
     		}
@@ -465,7 +465,6 @@ public class EasyFetion extends Activity
     
     private void loadContactList() {
     	ArrayList<HashMap<String, Object>> listItem = new ArrayList<HashMap<String, Object>>(); 
-		//for(int i=0;i<worker.contactList.size();i++)
 		Iterator<String> iter = contactList.keySet().iterator();
 		while(iter.hasNext())
 		{ 
@@ -478,11 +477,9 @@ public class EasyFetion extends Activity
 				mn = getString(R.string.mobileno_invalid);
 			}
 			
-			
 		    HashMap<String, Object> map = new HashMap<String, Object>(); 
 		    
 		    String potraitfile = c.userId + ".JPG";
-		    Debugger.d( "portrait filename is " + potraitfile);
 		    FileInputStream fis = null; 
 		    try {
 		    	fis = openFileInput(potraitfile);
@@ -490,14 +487,12 @@ public class EasyFetion extends Activity
 		    }
 		    if (fis == null) {
 		    	map.put("FetionImage", R.drawable.contact_default);
-		    	Debugger.d( "contact " + c.sipUri + " has no portrait");
 		    } else {
 		    	try {
 		    		map.put("FetionImage", "/data/data/com.saturdaycoder.easyfetion/files/" + potraitfile);
 		    	} catch (Exception e) {
 		    		map.put("FetionImage", R.drawable.contact_default);
 		    	}
-		    	Debugger.e( "contact " + c.sipUri + " HAS portrait");
 		    }
 		    map.put("FetionNickName", nn); 
 		    map.put("FetionMobileNo", mn); 
@@ -523,33 +518,33 @@ public class EasyFetion extends Activity
     @Override
     protected void onRestart()
     {
-    	Debugger.i( "QUICKFETION ONRESTART");
+    	Debugger.info( "QUICKFETION ONRESTART");
     	super.onRestart();
     }
     @Override
     protected void onResume()
     {
-    	Debugger.i( "QUICKFETION ONRESUME");
+    	Debugger.info( "QUICKFETION ONRESUME");
     	super.onResume();
 
     }
     @Override
     protected void onPause()
     {
-    	Debugger.i( "QUICKFETION ONPAUSE");
+    	Debugger.info( "QUICKFETION ONPAUSE");
     	super.onPause();
     }
     @Override
     protected void onStop()
     {
-    	Debugger.i( "QUICKFETION ONSTOP");
+    	Debugger.info( "QUICKFETION ONSTOP");
     	super.onStop();
     }
     @Override
     protected void onDestroy()
     {
 
-    	Debugger.i( "QUICKFETION ONDESTROY");
+    	Debugger.info( "QUICKFETION ONDESTROY");
     	super.onDestroy();
     	
     	loginThread.stop();
@@ -557,20 +552,18 @@ public class EasyFetion extends Activity
     	refreshThread.stop();
     	
     	try {
-    		//Network.closeSipcSocket();
     	} catch (Exception e) {
-    		
     	}
     }
     @Override
     protected void onSaveInstanceState(Bundle outState)
     {
-    	Debugger.i( "QUICKFETION ONSAVEINSTANCESTATE");
+    	Debugger.info( "QUICKFETION ONSAVEINSTANCESTATE");
     	super.onSaveInstanceState(outState);
     }
     @Override 
     public void onConfigurationChanged(Configuration newConfig) {
-    	Debugger.i( "QUICKFETION ONCONFIGURATIONCHANGED: " + newConfig.toString());
+    	Debugger.info( "QUICKFETION ONCONFIGURATIONCHANGED: " + newConfig.toString());
     	super.onConfigurationChanged(newConfig); 
 
     }
@@ -578,7 +571,7 @@ public class EasyFetion extends Activity
     //@Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
     {
-    	Debugger.d( "onMeasure(" + widthMeasureSpec + "," + heightMeasureSpec + ")");
+    	Debugger.debug( "onMeasure(" + widthMeasureSpec + "," + heightMeasureSpec + ")");
     	
     }
     @Override

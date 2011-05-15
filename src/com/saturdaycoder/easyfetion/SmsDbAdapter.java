@@ -136,7 +136,7 @@ public class SmsDbAdapter
 		//Uri allsms = Uri.parse("content://sms");
 		
 		Uri inserted = cr.insert(sent, values);
-		Debugger.d( "write sms into " + recvno + ": " + inserted.toString());
+		Debugger.debug( "write sms into " + recvno + ": " + inserted.toString());
 	}
 	public static void insertReceivedSms(String fromno, long millis, String msg)
 	{	
@@ -160,7 +160,7 @@ public class SmsDbAdapter
 		//Uri allsms = Uri.parse("content://sms");
 		
 		Uri inserted = cr.insert(inbox, values);
-		Debugger.d( "write sms into " + fromno + ": " + inserted.toString());
+		Debugger.debug( "write sms into " + fromno + ": " + inserted.toString());
 	}
 	
 }

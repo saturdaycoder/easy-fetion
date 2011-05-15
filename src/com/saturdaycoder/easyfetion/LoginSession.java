@@ -34,7 +34,7 @@ public class LoginSession {
 		try {
 			socket.close();
 		} catch (Exception e) {
-			Debugger.e("error closing SSI connection: " + e.getMessage());
+			Debugger.error("error closing SSI connection: " + e.getMessage());
 		}
 	}
 	
@@ -44,7 +44,7 @@ public class LoginSession {
 		FetionHttpMessage loginRequest = new FetionLoginHttpRequest(sysConfig.userId,
 				sysConfig.userPassword, sysConfig.mobileNumber, pv);
 
-		Debugger.d( "sending login request: " + loginRequest.toString());
+		Debugger.debug( "sending login request: " + loginRequest.toString());
 		os.write(loginRequest.toString().getBytes());
 	}
 	public void read() throws IOException 
@@ -77,10 +77,10 @@ public class LoginSession {
 		String useruri = nodeSid.getNodeValue();
 		sysConfig.userUri = useruri;
 		sysConfig.sId = useruri.substring(useruri.indexOf("sip:") + 4, useruri.indexOf('@'));
-		Debugger.d( "user's sId = \"" + sysConfig.sId + "\"");
+		Debugger.debug( "user's sId = \"" + sysConfig.sId + "\"");
 		Node nodeUserId = nnmUser.getNamedItem("user-id");
 		sysConfig.userId = nodeUserId.getNodeValue();		
-		Debugger.d( "user's userId = \"" + sysConfig.userId + "\"");
+		Debugger.debug( "user's userId = \"" + sysConfig.userId + "\"");
 	}
 	
 	public void postprocessVerification(FetionPictureVerification pv)
@@ -97,7 +97,7 @@ public class LoginSession {
 			pv.text = vn.getAttributes().getNamedItem("text").getNodeValue();
 			pv.tips = vn.getAttributes().getNamedItem("tips").getNodeValue();
 		} catch (Exception e) {
-			Debugger.e( "error parsing xml " + e.getMessage());
+			Debugger.error( "error parsing xml " + e.getMessage());
 			pv.algorithm = "";
 			pv.type = "";
 			pv.guid = "";

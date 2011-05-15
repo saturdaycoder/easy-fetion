@@ -63,7 +63,7 @@ public class FetionHttpMessageParser extends SocketMessageParser {
 			if (!reparse)
 				reparse = true;
 		}
-		Debugger.d( "len = " + len);
+		Debugger.debug( "len = " + len);
 		
 		if (reparse) 
 		{

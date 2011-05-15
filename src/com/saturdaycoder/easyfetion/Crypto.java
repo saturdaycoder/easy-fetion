@@ -218,7 +218,7 @@ public class Crypto {
 		    return hex2ascii(encryptedData);
 
 		} catch (Exception e) {
-			Debugger.e( "error encrypting data, " + e.getCause().toString() +" " + e.getMessage());
+			Debugger.error( "error encrypting data, " + e.getCause().toString() +" " + e.getMessage());
 			return null;
 		}
 

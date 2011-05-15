@@ -74,7 +74,7 @@ public class HttpThread extends Thread {
 	        pOs = pSocket.getOutputStream();
 	    } catch (Exception e) {
 	    	notifyState(State.GET_PORTRAIT_FAIL);
-	    	Debugger.e( "creating socket for loading portraits failed: " + e.getMessage());
+	    	Debugger.error( "creating socket for loading portraits failed: " + e.getMessage());
 	    	return;
 	    }
 	    Iterator<String> iter = contactList.keySet().iterator();
@@ -102,31 +102,21 @@ public class HttpThread extends Thread {
     			sysConfig.portraitServersName);
     	try {
     		os.write(req.toString().getBytes());
-    		Debugger.d( "sent request: " + req.toString());
+    		Debugger.debug( "sent request: " + req.toString());
         	FetionHttpResponse res = (FetionHttpResponse)p.parse(is);
         	if (res != null) {
-        		//Debugger.d( "received response: " + res.toString());
         	}
         	if (res != null && res.getResponseCode() == 200) {
-        		//fc.portrait = res.body;
-        		byte[] b = res.bodybytes;
-				java.math.BigInteger bi = new java.math.BigInteger(1, b);
-			    String hex = String.format("%0" + (b.length << 1) + "X", bi);
-				Debugger.d("hex is " + hex);
-				
         		FetionDatabase.getInstance().savePortrait(fc.userId + ".JPG", res.bodybytes);
-        		Debugger.d( "successfully got portrait for " + fc.sipUri);
-        		
         	}
         	else if (res != null && res.getResponseCode() == 404) {
-        		//fc.portrait = null;
-        		Debugger.d( "no portrait for " + fc.sipUri);
+        		Debugger.warn( "no portrait for " + fc.sipUri);
         	}
         	else {
-        		Debugger.d( "portrait for " + fc.sipUri + " ERROR");
+        		Debugger.warn( "portrait for " + fc.sipUri + " ERROR");
         	}
     	} catch (Exception e) {
-    		Debugger.e( "loading portrait for " + fc.sipUri + " failed: " + e.getMessage());
+    		Debugger.error( "loading portrait for " + fc.sipUri + " failed: " + e.getMessage());
     	}
         
         
@@ -146,23 +136,23 @@ public class HttpThread extends Thread {
     		//	notifyState(State.INIT);
     		//	break;
     		case LOGIN: {
-    	        Debugger.v("login thread starts");
+    	        Debugger.verbose("login thread starts");
     	        notifyState(State.WAIT_LOGIN);
     	        LoginSession login = null;
     	        try {
     	        	login = new LoginSession(sysConfig);
     	        } catch (Exception e) {
-    	        	Debugger.e("unable to establish login SSL socket: " + e.getMessage());
+    	        	Debugger.error("unable to establish login SSL socket: " + e.getMessage());
     	        	notifyState(State.NETWORK_DOWN);
     	        	return;
     	        }
     	        notifyState(State.LOGIN_SENDING);
-    	        Debugger.v("retry login");
+    	        Debugger.verbose("retry login");
     	        try {
     	        	login.send(verification);
     	        	verification.clear();
     	        } catch (Exception e) {
-    	        	Debugger.e("unable to send login command thru SSL socket: " + e.getMessage());
+    	        	Debugger.error("unable to send login command thru SSL socket: " + e.getMessage());
     	        	login.close();
     	        	notifyState(State.NETWORK_DOWN);
     	        	return;	
@@ -172,12 +162,12 @@ public class HttpThread extends Thread {
     	        try {
     	        	login.read();
     	        } catch (Exception e) {
-    	        	Debugger.e("error retriving SSL response: " + e.getMessage());
+    	        	Debugger.error("error retriving SSL response: " + e.getMessage());
     	        	login.close();
     	        	notifyState(State.NETWORK_DOWN);
     	        	return;	
     	        }
-    	        Debugger.d("login response = \"" + login.response + "\"");
+    	        Debugger.debug("login response = \"" + login.response + "\"");
     	        
     	        notifyState(State.LOGIN_POSTPROCESSING);
     	        int statuscode = login.response.getResponseCode();
@@ -189,7 +179,7 @@ public class HttpThread extends Thread {
     	            	notifyState(State.LOGIN_SUCC);
     	            	return;
     	        	} catch (Exception e) {
-    	        		Debugger.e("error parsing XML in the response: " + e.getMessage());
+    	        		Debugger.error("error parsing XML in the response: " + e.getMessage());
     	            	login.close();
     	            	notifyState(State.LOGIN_FAIL);
     	            	return;	
@@ -198,7 +188,7 @@ public class HttpThread extends Thread {
     	        case 421:
     	        	login.postprocessVerification(verification);
     	        	
-    	        	Debugger.d("login verify code=" + verification.code);
+    	        	Debugger.debug("login verify code=" + verification.code);
     	        	login.close();
     	        	notifyState(State.LOGIN_NEED_CONFIRM);
     	        	return;
@@ -214,7 +204,7 @@ public class HttpThread extends Thread {
     			try {
     				sysConfig.initDownload();
     			} catch (Exception e) {
-    				Debugger.e("error creating config download socket: " + e.getMessage());
+    				Debugger.error("error creating config download socket: " + e.getMessage());
     				notifyState(State.NETWORK_DOWN);
     				return;
     			}
@@ -224,7 +214,7 @@ public class HttpThread extends Thread {
     	        	sysConfig.sendDownload();
     	        }catch (Exception e) {
     				sysConfig.closeDownload();
-    				Debugger.e("error sending config download command: " + e.getMessage());
+    				Debugger.error("error sending config download command: " + e.getMessage());
     				notifyState(State.NETWORK_DOWN);
     				return;
     			}
@@ -234,7 +224,7 @@ public class HttpThread extends Thread {
     	        	sysConfig.readDownload();
     	        }catch (Exception e) {
     				sysConfig.closeDownload();
-    				Debugger.e("error reading the config response: " + e.getMessage());
+    				Debugger.error("error reading the config response: " + e.getMessage());
     				notifyState(State.NETWORK_DOWN);
     				return;
     			}
@@ -243,18 +233,18 @@ public class HttpThread extends Thread {
     	   			sysConfig.postprocessDownload();
     	   		}catch (org.xml.sax.SAXException e) {
     				sysConfig.closeDownload();
-    				Debugger.e("SAX error parsing config XML in the response: " + e.toString());
+    				Debugger.error("SAX error parsing config XML in the response: " + e.toString());
     				notifyState(State.CONFIG_DOWNLOAD_FAIL);
     				return;
     			}catch (javax.xml.parsers.ParserConfigurationException e) {
     				sysConfig.closeDownload();
-    				Debugger.e("Parser error parsing config XML in the response: " + e.toString());
+    				Debugger.error("Parser error parsing config XML in the response: " + e.toString());
     				notifyState(State.CONFIG_DOWNLOAD_FAIL);
     				return;
     			}
     	   		catch (java.io.IOException e) {
     				sysConfig.closeDownload();
-    				Debugger.e("IO error parsing config XML in the response: " + e.toString());
+    				Debugger.error("IO error parsing config XML in the response: " + e.toString());
     				notifyState(State.CONFIG_DOWNLOAD_FAIL);
     				return;
     			}
@@ -270,11 +260,11 @@ public class HttpThread extends Thread {
     				if (cl != null)
     					doGetPortraits(cl);
     				else {
-    					Debugger.e("can not extract arguments for geting portrait");
+    					Debugger.error("can not extract arguments for geting portrait");
         				notifyState(State.GET_PORTRAIT_FAIL);
     				}
     			} catch (Exception e) {
-    				Debugger.e("can not extract arguments for geting portrait: " + e.getMessage());
+    				Debugger.error("can not extract arguments for geting portrait: " + e.getMessage());
     				notifyState(State.GET_PORTRAIT_FAIL);
     			}
     			break;

@@ -12,6 +12,7 @@ public class SipcCommand extends SipcMessage {
 		OPTION,
 		INVITATION,
 		ACKNOWLEDGE,
+		BENOTIFY,
 		// others
 		UNKNOWN		
 	};
@@ -25,7 +26,8 @@ public class SipcCommand extends SipcMessage {
 		"IN",
 		"O",
 		"I",
-		"A"
+		"A",
+		"BN",
 	};
 	
 	protected CommandType getCommandType() {

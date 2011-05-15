@@ -1,20 +1,18 @@
 package com.saturdaycoder.easyfetion;
 
 import java.io.*;
-
+import java.util.ArrayList;
 public class SipcMessageParser extends SocketMessageParser
 {
 	public SocketMessage parse(InputStream is) throws IOException, java.net.SocketTimeoutException
 	{	
-		
+		//ArrayList<Byte> ba = new ArrayList<Byte>();
 		byte output[] = new byte[2048];
 		String str = "";
 		int len  = 0;
 		
-		//try {
 		boolean reparse = false;
 		len = is.read(output);
-		Debugger.d( "read: " + len);
 		str = new String(output, 0, len);
 		SipcMessage resp1 = (SipcMessage)this.parse(str);
 		String headerL = resp1.getHeaderValue("L");
@@ -24,14 +22,18 @@ public class SipcMessageParser extends SocketMessageParser
 		}	
 		
 		int totallen = Integer.parseInt(headerL);
-		Debugger.d( "response length=" + totallen);
 		int headerlen = str.indexOf("\r\n\r\n") + 4;
 		
+		byte[] bodybytes = new byte[totallen];
+		resp1.bodybytes = bodybytes;
+		System.arraycopy(output, 0, bodybytes, 0, len-headerlen);
 		while (len < totallen + headerlen) {
 			
 			int rc = (totallen + headerlen - len > 2048)? 2048: (totallen + headerlen - len);
 			int l = is.read(output, 0, rc);
-			
+			if (l == -1)
+				break;
+			System.arraycopy(output, 0, bodybytes, len-headerlen, l);
 			str += new String(output, 0, l);
 			len += l;
 			if (!reparse && len < totallen + headerlen)
@@ -39,26 +41,19 @@ public class SipcMessageParser extends SocketMessageParser
 		}
 		if (reparse) 
 		{
-			return this.parse(str);
+			SipcResponse resp2 = (SipcResponse)this.parse(str);
+			resp2.bodybytes = bodybytes;
+			return resp2;
 		}
 		else {
 			return resp1;
 		}
-		//} catch (IOException e) {
-		//	Debugger.e( "error parsing input stream: " + e.getMessage());
-		//	return null;
-		//}catch (NumberFormatException e) {
-		//	Debugger.e( "error parsing integer: " + e.getMessage());
-		//	return null;
-		//}
-
 	}
 	public SocketMessage parse(String str)
 	{
 		String tmp = str;
 		SipcMessage msg;
 		
-		// parse command line
 		String strcommand = tmp.substring(0, tmp.indexOf("\r\n"));
 		
 		if (strcommand.startsWith("SIP-C/4.0")) {
@@ -70,6 +65,8 @@ public class SipcMessageParser extends SocketMessageParser
 			msg.setCmdLine(strcommand);
 		}
 		else {
+			Debugger.error("Unable to recognize such kind of message:");
+			Debugger.error(str);
 			return null;
 		}
 		tmp = tmp.substring(tmp.indexOf("\r\n") + 2);

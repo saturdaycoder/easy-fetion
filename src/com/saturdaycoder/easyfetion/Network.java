@@ -35,7 +35,7 @@ public class Network {
 	public static void createSipcSocket(String ip, int port) throws IOException
 	{
 		
-		Debugger.d("SIPC connect to " + ip + ":" + port);
+		Debugger.debug("SIPC connect to " + ip + ":" + port);
 		
 		if (sipcSocket == null || sipcSocket.isClosed()) {
 			sipcSocket = new Socket(ip, port);
@@ -54,8 +54,8 @@ public class Network {
 			os = sipcSocket.getOutputStream();
 			Debugger.d("sipc linger = " + sipcSocket.getSoLinger());
 		}*/
-		Debugger.d("sipc linger = " + sipcSocket.getSoLinger());
-		Debugger.d( "SIPC socket is CREATED");
+		Debugger.debug("sipc linger = " + sipcSocket.getSoLinger());
+		Debugger.debug( "SIPC socket is CREATED");
 	}
 	public static InputStream getSipcInputStream() throws IOException
 	{
@@ -71,15 +71,15 @@ public class Network {
 	{
 		
 		if (sipcSocket != null && sipcSocket.isConnected()) {
-			Debugger.d("sipc linger = " + sipcSocket.getSoLinger());
-			Debugger.d("closing SIPC socket");
+			Debugger.debug("sipc linger = " + sipcSocket.getSoLinger());
+			Debugger.debug("closing SIPC socket");
 			sipcSocket.close();
 			sipcSocket = null;
 			//sipcSocket.setKeepAlive(false);
 			is = null;
 			os = null;
 		}
-		Debugger.d( "SIPC socket is CLOSED");
+		Debugger.debug( "SIPC socket is CLOSED");
 	}
 	
 	public static void setActivity(Activity activity) {

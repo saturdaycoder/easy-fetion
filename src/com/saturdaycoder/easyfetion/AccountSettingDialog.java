@@ -46,7 +46,7 @@ public class AccountSettingDialog extends Activity
 				try {
 					localMobileno = Network.getPhoneNumber();
 				} catch (Exception e) {
-					Debugger.e( "error getting local phone number: " + e.getMessage());
+					Debugger.error( "error getting local phone number: " + e.getMessage());
 				}
 				
 				if (!localMobileno.equals(mobileno)) {
@@ -76,7 +76,7 @@ public class AccountSettingDialog extends Activity
 	@Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-    	Debugger.d( "onActivityResult: " + requestCode + ", " + resultCode );
+    	Debugger.debug( "onActivityResult: " + requestCode + ", " + resultCode );
     	switch (requestCode) {
     	case 0: {
     		Bundle b = new Bundle();

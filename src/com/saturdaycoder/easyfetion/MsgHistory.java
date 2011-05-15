@@ -87,7 +87,7 @@ public class MsgHistory extends Activity
 		
 		if (mobileno == null || nickname == null) {
 			
-			Debugger.d( "can't get correct parameter");
+			Debugger.debug( "can't get correct parameter");
 			
 			return;
 		}
@@ -118,7 +118,7 @@ public class MsgHistory extends Activity
         public void handleMessage(Message msg) 
 		{
 			ThreadState ss = (ThreadState)msg.obj;
-			Debugger.d( "sendmsgthread reports " + ss.state.toString());
+			Debugger.debug( "sendmsgthread reports " + ss.state.toString());
 			switch (ss.state) {
 			case CONNECTING_SIPC: 
 				break;
@@ -298,7 +298,7 @@ public class MsgHistory extends Activity
 	@Override
 	protected void onStop() {
     	unregisterReceiver(receiver);
-    	Debugger.d( "RECEIVER UNREGISTERED");
+    	Debugger.debug( "RECEIVER UNREGISTERED");
     	super.onStop();
 	}
 	@Override
@@ -312,13 +312,13 @@ public class MsgHistory extends Activity
 	protected void onStart() {
 		super.onStart();
 		
-		Debugger.d( "loading sms list of " + mobileno);
+		Debugger.debug( "loading sms list of " + mobileno);
 		
     	IntentFilter filter = new IntentFilter();
     	filter.addAction("android.provider.Telephony.SMS_RECEIVED");
     	filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
     	registerReceiver(receiver, filter);
-    	Debugger.d( "RECEIVER REGISTERED");
+    	Debugger.debug( "RECEIVER REGISTERED");
 		
 		
 		loadMsgList();
@@ -393,10 +393,10 @@ public class MsgHistory extends Activity
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			Debugger.d( "SmsReceiver.onReceive");
+			Debugger.debug( "SmsReceiver.onReceive");
 			if (intent.getAction().equals(mReceiveAction)) 
 			{
-				Debugger.d( "SmsReceiver.onReceive SMS_RECEIVED");
+				Debugger.debug( "SmsReceiver.onReceive SMS_RECEIVED");
 				
 				//StringBuilder sb = new StringBuilder();
 				
@@ -414,7 +414,7 @@ public class MsgHistory extends Activity
 						String addr = sms.getOriginatingAddress();
 						long date = sms.getTimestampMillis();
 						String body = sms.getMessageBody();
-						Debugger.d( "received sms from " + addr);
+						Debugger.debug( "received sms from " + addr);
 						if (/*addr.equals(mobileno) || */addr.equals(msgno)) {
 							hasThisContact = true;
 
@@ -426,7 +426,7 @@ public class MsgHistory extends Activity
 								 sp.play(newsmshit, 2, 1, 0, 0, (float)1.0);
 								
 							} catch (Exception e) {
-								Debugger.e( "can not play sound:" + e.getMessage());
+								Debugger.error( "can not play sound:" + e.getMessage());
 							}
 					    }
 						else {
@@ -440,7 +440,7 @@ public class MsgHistory extends Activity
 					loadMsgList();
 				}
 				if (!hasOtherContact) {
-					Debugger.e( "do not stop sms propagation because of other contact");
+					Debugger.error( "do not stop sms propagation because of other contact");
 					abortBroadcast();
 			        setResultData(null);
 				}

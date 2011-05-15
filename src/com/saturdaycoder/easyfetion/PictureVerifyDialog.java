@@ -59,7 +59,7 @@ public class PictureVerifyDialog extends Activity
         
     	//decode pic
     	if (decPicData != null) {
-    		Debugger.d( "start decoding pic");
+    		Debugger.debug( "start decoding pic");
     		
     		Bitmap bmp = BitmapFactory.decodeByteArray(decPicData, 0, decPicData.length);
     		/*if (bmp == null) {

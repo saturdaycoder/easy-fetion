@@ -62,7 +62,7 @@ public class SystemConfig {
 	
 	protected SystemConfig(){
 		
-		Debugger.d( "SYSTEMCONFIG CTOR");
+		Debugger.debug( "SYSTEMCONFIG CTOR");
 		
 		publicIp = "";
 		lastLoginIp = "";
@@ -147,7 +147,7 @@ public class SystemConfig {
 			
 			return sw.toString();
 		} catch (Exception e) {
-			Debugger.e( "error generating conf download xml: " + e.getMessage());
+			Debugger.error( "error generating conf download xml: " + e.getMessage());
 			return null;
 		}
 
@@ -169,7 +169,7 @@ public class SystemConfig {
 		try {
 			socket.close();
 		} catch (Exception e) {
-			Debugger.e("error closing config download socket: " + e.getMessage());
+			Debugger.error("error closing config download socket: " + e.getMessage());
 		}
 	}
 	public void sendDownload() throws IOException 
@@ -181,7 +181,7 @@ public class SystemConfig {
 	           + "Connection: Close\r\n" 
 	           + "Content-Length: " + body.length() + "\r\n\r\n" + body;
 		
-		Debugger.d( "config request = \"" + str + "\"");
+		Debugger.debug( "config request = \"" + str + "\"");
 		
 		os.write(str.getBytes());
 	}
@@ -191,7 +191,7 @@ public class SystemConfig {
 		FetionHttpMessageParser parser = new FetionHttpMessageParser();
 		resp = (FetionHttpResponse)parser.parse(is);
 		
-		Debugger.d( "config download response = \"" + resp.toString()+"\"");
+		Debugger.debug( "config download response = \"" + resp.toString()+"\"");
 	}
 	
 	public void postprocessDownload() 
@@ -204,7 +204,7 @@ public class SystemConfig {
 		DocumentBuilder db = dbf.newDocumentBuilder(); 
 		Document document = db.parse(new ByteArrayInputStream(xmlstr.getBytes())); 
 		Node node = document.getFirstChild();
-		Debugger.d( "rootnode name is " + node.getNodeName());
+		Debugger.debug( "rootnode name is " + node.getNodeName());
 		
 		NodeList nl = node.getChildNodes();
 		
@@ -214,36 +214,36 @@ public class SystemConfig {
 			if (nl.item(j).getNodeName().equals("servers"))
 			{
 				this.configServersVersion = nl.item(j).getAttributes().getNamedItem("version").getNodeValue();
-				Debugger.d( "servers version = " + this.configServersVersion);
+				Debugger.debug( "servers version = " + this.configServersVersion);
 				NodeList nlservers = nl.item(j).getChildNodes();
-				Debugger.d( "servers node has " + nlservers.getLength() + " child nodes");
+				Debugger.debug( "servers node has " + nlservers.getLength() + " child nodes");
 				for (int i = 0; i < nlservers.getLength(); ++i) 
 				{
 					Node n = nlservers.item(i);
 					// sipc-proxy
 					if (n.getNodeName().equals("sipc-proxy")) 
 					{
-						Debugger.d( "found sipc proxy node");
+						Debugger.debug( "found sipc proxy node");
 						String tmp = n.getFirstChild().getNodeValue();//n.getTextContent();
-						Debugger.d( "found sipc proxy node value: " + tmp);
+						Debugger.debug( "found sipc proxy node value: " + tmp);
 						this.sipcProxyIp = tmp.substring(0, tmp.indexOf(':'));
-						Debugger.d( "sipcProxyIp = \"" + this.sipcProxyIp + "\"");
+						Debugger.debug( "sipcProxyIp = \"" + this.sipcProxyIp + "\"");
 						this.sipcProxyPort = Integer.parseInt(tmp.substring(tmp.indexOf(':') + 1));
-						Debugger.d( "sipcProxyPort = " + this.sipcProxyPort);
+						Debugger.debug( "sipcProxyPort = " + this.sipcProxyPort);
 					}
 					// get-uri
 					if (n.getNodeName().equals("get-uri")) 
 					{
-						Debugger.d( "found get-uri node");
+						Debugger.debug( "found get-uri node");
 						String tmp = n.getFirstChild().getNodeValue();
 						tmp = tmp.substring(tmp.indexOf("http://") + 7);
 						int firstSlashPos = tmp.indexOf('/');
 						//int secondSlashPos = tmp.substring(firstSlashPos + 1).indexOf('/');
 						this.portraitServersName = tmp.substring(0, firstSlashPos);
-						Debugger.d( "portraitServersName = \"" + this.portraitServersName + "\"");
+						Debugger.debug( "portraitServersName = \"" + this.portraitServersName + "\"");
 						this.portraitServersPath = tmp.substring(firstSlashPos + 1);
 						this.portraitServersPath = this.portraitServersPath.substring(0, this.portraitServersPath.indexOf('/'));
-						Debugger.d( "portraitServersPath = \"" + this.portraitServersPath + "\"");
+						Debugger.debug( "portraitServersPath = \"" + this.portraitServersPath + "\"");
 					}
 				}
 			}
@@ -253,7 +253,7 @@ public class SystemConfig {
 			{
 				//Node nParameters = nl.getNamedItem("parameters");
 				this.configParametersVersion = nl.item(j).getAttributes().getNamedItem("version").getNodeValue();
-				Debugger.d( "parameters version = " + this.configParametersVersion);
+				Debugger.debug( "parameters version = " + this.configParametersVersion);
 			}
 			
 			// hints version
@@ -261,7 +261,7 @@ public class SystemConfig {
 			{
 				//Node nHints = nl.getNamedItem("hints");
 				this.configHintsVersion = nl.item(j).getAttributes().getNamedItem("version").getNodeValue();
-				Debugger.d( "hints version = " + this.configHintsVersion);
+				Debugger.debug( "hints version = " + this.configHintsVersion);
 			}
 		}
 	}

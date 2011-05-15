@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">微飞信</string>
+    <string name="app_name">飞信随手发</string>
     <string name="button_send_text">发送</string>
     <string name="button_cancel_text">取消</string>
     <string name="nickname_invalid">无效昵称</string>

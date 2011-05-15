@@ -37,7 +37,6 @@ public class EasyFetion extends Activity
 	private static String TAG = "EasyFetion";
 	
 	private String lastLoginAcc = "";
-	//private String lastPasswd = "";
 
 	private static final int MENU_SET_ACC_ID = Menu.FIRST;  
 	private static final int MENU_REFRESH_ID = Menu.FIRST + 1;  
@@ -56,19 +55,9 @@ public class EasyFetion extends Activity
     private Handler refreshUiHandler;
     private Crypto crypto;
     private Map<String, FetionContact> contactList;
-    
-    
-    
-    //private FetionPictureVerification verification;
-    
     private HttpThread loginThread;
     private SipcThread refreshThread;
     
-    //private boolean pendingLogin = false;
-
-    //final EasyFetionThread worker = new EasyFetionThread();;
-    
-    //private ArrayList<FetionContact> selectedContacts = new ArrayList<FetionContact>();
     
     private void showerr(String TAG, String msg)
     {
@@ -99,26 +88,29 @@ public class EasyFetion extends Activity
 	    		refreshThread.addCommand(SipcThread.Command.REGISTER, null);
 	    		break;
     		case CONNECTING_FAIL:
-    			dismissDialog(DIALOG_REFRESH_PROGRESS);
-    			showerr(TAG, "Pls check your network connection");
+    			try {
+    				dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			} catch (Exception e) {}
+    			showerr(TAG, "网络连接出错。检查一下网络连接吧。");
     			break;
     		case DISCONNECTING_SIPC:
     		case DISCONNECTING_SUCC:
     		case DISCONNECTING_FAIL:
-    			
+    			break;
     		case WAIT_REGISTER:
     		case REGISTER_SENDING:
     		case REGISTER_READING:
     		case REGISTER_POSTPROCESSING:
     			break;
     		case REGISTER_FAIL:
+    			try {
+					dismissDialog(DIALOG_REFRESH_PROGRESS);
+				} catch (Exception e) {}
     			refreshThread.addCommand(SipcThread.Command.DISCONNECT_SIPC, null);
     			break;
     		case REGISTER_SUCC:
-
 	    		refreshThread.addCommand(SipcThread.Command.AUTHENTICATE, null);
 	    		break;
-        	
     		case WAIT_AUTHENTICATE:
     		case AUTHENTICATE_SENDING:
     		case AUTHENTICATE_READING:
@@ -137,20 +129,19 @@ public class EasyFetion extends Activity
 				break;
 			}
     		case AUTHENTICATE_SUCC:
-
 	    		refreshThread.addCommand(SipcThread.Command.GET_CONTACTS, null);
 	    		break;
     		case AUTHENTICATE_FAIL:
     			refreshThread.addCommand(SipcThread.Command.DISCONNECT_SIPC, null);
-    			dismissDialog(DIALOG_REFRESH_PROGRESS);
-				showerr(TAG, "authenticate failed. try again");
+    			try {
+					dismissDialog(DIALOG_REFRESH_PROGRESS);
+				} catch (Exception e) {}
+				showerr(TAG, "账号验证失败了。。。");
 				break;
     		case WAIT_GET_CONTACT:
     		case CONTACT_GETTING:
     			break;
     		case CONTACT_GET_SUCC: {
-				
-				
 				loginThread.addCommand(HttpThread.Command.GET_PORTRAIT, contactList);
 				FetionDatabase.getInstance().setUserInfo(sysConfig);
 				
@@ -171,13 +162,15 @@ public class EasyFetion extends Activity
 			       //e.printStackTrace();
 			       Debugger.e( ".nomedia mark wrote failed: " + e.getMessage());
 			    }
-				showerr(TAG, "Congratulations! contact list ok!!");
+				showerr(TAG, "成功地获取到联系人列表啦！");
 				break;
 			}
     		case CONTACT_GET_FAIL:
     			refreshThread.addCommand(SipcThread.Command.DROP, null);
-    			dismissDialog(DIALOG_REFRESH_PROGRESS);
-    			showerr(TAG, "Failed to get contact list");
+    			try {
+    				dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			} catch (Exception e) {}
+    			showerr(TAG, "获取联系人列表出错。");
     			break;
     		case WAIT_DROP:
     		case DROP_SENDING:
@@ -191,41 +184,19 @@ public class EasyFetion extends Activity
     		case THREAD_EXIT:
     			break;
     		case NETWORK_DOWN:
-    			dismissDialog(DIALOG_REFRESH_PROGRESS);
-    			showerr(TAG, "Pls check your network connection");
+    			try {
+    				dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			} catch (Exception e) {}
+    			showerr(TAG, "网络连接出错。检查一下网络连接吧。");
     			break;
     		case NETWORK_TIMEOUT:
-    			dismissDialog(DIALOG_REFRESH_PROGRESS);
-    			showerr(TAG, "Network connection timed out");
+    			try {
+    				dismissDialog(DIALOG_REFRESH_PROGRESS);
+    			} catch (Exception e) {}
+    			showerr(TAG, "网络超时了。。。。。。");
     			break;
 			default:
 				break;
-			/*case PORTRAIT_GET_SUCC: {
-
-				loadContactList();
-				Iterator<String> iter = contactList.keySet().iterator();
-        		while (iter.hasNext()) {
-        			String uri = iter.next();
-        			FetionContact c = contactList.get(uri);
-        			//FetionDatabase.getInstance().setContact(c);
-        			if (!c.portrait.equals("")) {
-        				try{
-        					FileOutputStream fos = openFileOutput(
-        							c.userId + ".JPG", Context.MODE_PRIVATE);
-        					fos.write(c.portrait.getBytes(), 0, c.portrait.getBytes().length);
-        					//fw.flush();
-        					fos.close();
-        					Debugger.d( "portrait " + c.sId + " wrote succeeded");
-        			    } catch(Exception e) {
-        			       e.printStackTrace();
-        			       Debugger.e( "portrait " + c.sId + " wrote failed: " + e.getMessage());
-        			    }
-        			} else {
-        				Debugger.d( "portrait " + c.sId + " not exist");
-        			}
-        		}
-				break;
-			}*/
 			}
 		}
 	}
@@ -254,13 +225,13 @@ public class EasyFetion extends Activity
 			case LOGIN_FAIL: 
 				try {
 					dismissDialog(DIALOG_LOGIN_PROGRESS);
-					showerr(TAG, "Login failed. input your account again");
+					showerr(TAG, "登录失败了，检查一下账号和密码有没有写错？");
 				} catch (Exception e) {
 					
 				}
 				try {
 					dismissDialog(DIALOG_REFRESH_PROGRESS);
-					showerr(TAG, "Password/account error");
+					showerr(TAG, "登录失败了，检查一下账号和密码有没有写错？");
 				} catch (Exception e) {
 					
 				}
@@ -274,7 +245,7 @@ public class EasyFetion extends Activity
 			case CONFIG_DOWNLOAD_SUCC:
 				try {
 					dismissDialog(DIALOG_LOGIN_PROGRESS);
-					showerr(TAG, "Congratulations! Your ass is mine!!");
+					showerr(TAG, "账号配置已经成功下载完毕");
 				} catch (IllegalArgumentException e) {
 					
 				}
@@ -287,48 +258,31 @@ public class EasyFetion extends Activity
 				refreshThread.addCommand(SipcThread.Command.CONNECT_SIPC, null);
 				break;
 			case CONFIG_DOWNLOAD_FAIL:
-				dismissDialog(INTENT_ACC_SET_DIALOG);
-				showerr(TAG, "Your login failed");
+				try { 
+					dismissDialog(DIALOG_LOGIN_PROGRESS);
+				} catch (Exception e) {}
+				try {
+					dismissDialog(DIALOG_REFRESH_PROGRESS);
+				} catch (Exception e) {}
+				showerr(TAG, "账号配置获取失败，请重试。。。");
 				break;
 			case NETWORK_DOWN:
-				showerr(TAG, "Network error!!");
+				try { 
+					dismissDialog(DIALOG_LOGIN_PROGRESS);
+				} catch (Exception e) {}
+				try {
+					dismissDialog(DIALOG_REFRESH_PROGRESS);
+				} catch (Exception e) {}
+				showerr(TAG, "网络连接出错。检查一下网络连接吧。");
 				break;
 			case GET_PORTRAIT_FAIL:
 				refreshThread.addCommand(SipcThread.Command.DROP, null);
-				showerr(TAG, "getting portrait failed");
+				showerr(TAG, "联系人头像下载出错。。。");
 				break;
 			case GET_PORTRAIT_SUCC:
 				refreshThread.addCommand(SipcThread.Command.DROP, null);
-				/*Iterator<String> iter = contactList.keySet().iterator();
-			    while (iter.hasNext())
-		        {
-		        	String uri = iter.next();
-		        	FetionContact fc = contactList.get(uri);
-		        	if (fc.portrait == null) {
-		        		Debugger.d("user " + fc.userId+"has no portrait");
-		        		// if the portrait is null, delete existing portrait 
-		        		// picture if it exists
-	        			File f = new File("/data/data/com.saturdaycoder.easyfetion/files/" + fc.userId + ".JPG");
-	        			if (f.exists()) {
-	        				Debugger.d("delete should-not-exist portrait: " 
-	        						+ fc.userId + ".JPG");
-	        				f.delete();
-	        			}
-		        		
-		        	}
-		        	else if (fc.portrait.equals("")) {
-		        		// portrait is just not downloaded; it may exists so I 
-		        		// don't delete the picture file
-		        		Debugger.d("portrait of " + fc.userId + " not downloaded");
-		        	}
-		        	else {
-		        		// if portrait is downloaded, write it to file
-		        		Debugger.d("write portrait of " + fc.userId);
-						
-		        	}
-		        }*/
 				loadContactList();
-				showerr(TAG, "getting portrait succeeded");
+				showerr(TAG, "联系人头像下载完毕！");
 				break;
 			default:
 				break;
@@ -345,25 +299,14 @@ public class EasyFetion extends Activity
     	Debugger.d( "QUICKFETION ONCREATE");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        //btnSend = (Button)findViewById(R.id.buttonSend);
-        //editMsg = (EditText)findViewById(R.id.editMessage);
-        //spinContacts = (Spinner)findViewById(R.id.spinContacts);
+
         lvContacts = (ListView)findViewById(R.id.lvContacts);
-        
-
+ 
         Network.setActivity(this);
-        
-        /*if (!Network.isNetworkAvailable()) {
-        	showerr(TAG, "Give me your WIFI/3G's ass. Or I get nothing to fuck");
-
-        	finish();
-        	return;
-        }*/
         
         FetionDatabase.setInstance(this);
         SmsDbAdapter.setContext(this);
         
-        //sysConfig = new SystemConfig();
         sysConfig = SystemConfig.getInstance();
         refreshUiHandler = new RefreshUiHandler();
         loginUiHandler = new LoginUiHandler();
@@ -383,7 +326,6 @@ public class EasyFetion extends Activity
         	public void onItemClick(AdapterView<?> a, View v, int position, long id) 
         	{
         		Debugger.d( "lvcontacts onitemclick");
-        		//selectedContacts.clear();
         		Iterator<String> iter = contactList.keySet().iterator();
         		int i = -1;
         		String uri = "";
@@ -472,7 +414,7 @@ public class EasyFetion extends Activity
     			}
 		    	default:
 		    		dismissDialog(DIALOG_REFRESH_PROGRESS);
-		    		showerr(TAG,  "User gave up authentication");
+		    		showerr(TAG,  "用户中止了账号验证");
 		    		break;
     			}
     		}
@@ -507,8 +449,7 @@ public class EasyFetion extends Activity
     		FetionDatabase.getInstance().getUserInfo(sysConfig);
     		Debugger.d( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
     		if (sysConfig.sipcProxyIp == "" || sysConfig.sipcProxyPort == -1) {
-    			//Debugger.e( "error getting sipc proxy from db");
-    			// download config
+
     		}
     		else {
     			
@@ -548,10 +489,14 @@ public class EasyFetion extends Activity
 		    } catch (FileNotFoundException e) {
 		    }
 		    if (fis == null) {
-		    	map.put("FetionImage", R.drawable.contact_default);//R.drawable.icon);
+		    	map.put("FetionImage", R.drawable.contact_default);
 		    	Debugger.d( "contact " + c.sipUri + " has no portrait");
 		    } else {
-		    	map.put("FetionImage", "/data/data/com.saturdaycoder.easyfetion/files/" + potraitfile);
+		    	try {
+		    		map.put("FetionImage", "/data/data/com.saturdaycoder.easyfetion/files/" + potraitfile);
+		    	} catch (Exception e) {
+		    		map.put("FetionImage", R.drawable.contact_default);
+		    	}
 		    	Debugger.e( "contact " + c.sipUri + " HAS portrait");
 		    }
 		    map.put("FetionNickName", nn); 
@@ -607,14 +552,12 @@ public class EasyFetion extends Activity
     	Debugger.i( "QUICKFETION ONDESTROY");
     	super.onDestroy();
     	
-    	if (loginThread.isAlive())
-    		loginThread.stop();
+    	loginThread.stop();
     	
-    	if (refreshThread.isAlive())
-    		refreshThread.stop();
+    	refreshThread.stop();
     	
     	try {
-    		Network.closeSipcSocket();
+    		//Network.closeSipcSocket();
     	} catch (Exception e) {
     		
     	}
@@ -677,7 +620,7 @@ public class EasyFetion extends Activity
 				loginThread.addCommand(Command.LOGIN, null);
                 break;  
             case MENU_ABOUT_ID:  
-                showerr(TAG, "This client is fucking awesome!");  
+                showerr(TAG, "这是一个为了方便发送飞信的小程序。每次发送完飞信消息就会离线，以节省流量。");  
                 break;  
         }  
         return super.onOptionsItemSelected(aMenuItem);
@@ -688,18 +631,18 @@ public class EasyFetion extends Activity
         switch (id) {
             case DIALOG_LOGIN_PROGRESS: {
                 ProgressDialog dialog = new ProgressDialog(this);
-                dialog.setTitle("Login");
-                dialog.setMessage("Please wait while loging in...");
+                dialog.setTitle("登录");
+                dialog.setMessage("请稍候。。。");
                 dialog.setIndeterminate(true);
-                dialog.setCancelable(false);
+                dialog.setCancelable(true);
                 return dialog;
             }
             case DIALOG_REFRESH_PROGRESS: {
                 ProgressDialog dialog = new ProgressDialog(this);
-                dialog.setTitle("Refresh");
-                dialog.setMessage("Please wait while refreshing...");
+                dialog.setTitle("刷新列表");
+                dialog.setMessage("请稍候。。。");
                 dialog.setIndeterminate(true);
-                dialog.setCancelable(false);
+                dialog.setCancelable(true);
                 return dialog;
             }
         }

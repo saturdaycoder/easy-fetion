@@ -94,15 +94,19 @@ public class PictureVerifyDialog extends Activity
     {
         if(keyCode == KeyEvent.KEYCODE_BACK)
         {
-        	/*Bundle b = new Bundle();
-			intent.putExtras(b);
-			AccountSettingDialog.this.setResult(RESULT_CANCELED, intent);
-			AccountSettingDialog.this.finish();*/
-        	Toast.makeText(PictureVerifyDialog.this, "请输入正确的验证码",
+        	/*Toast.makeText(PictureVerifyDialog.this, "请输入正确的验证码",
                     Toast.LENGTH_SHORT).show();
-        	return true;
+        	return true;*/
+    		Intent i = new Intent();
+			Bundle b = new Bundle();
+			//b.putString("code", editCode.getText().toString());
+			
+			i.putExtras(b);
+			PictureVerifyDialog.this.setResult(RESULT_CANCELED, i);
+			PictureVerifyDialog.this.finish();
+			return true;
         }
-        return super.onKeyDown(keyCode, event);
+        else return super.onKeyDown(keyCode, event);
            
     } 
 }

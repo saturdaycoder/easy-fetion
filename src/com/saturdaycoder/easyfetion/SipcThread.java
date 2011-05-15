@@ -25,6 +25,9 @@ public class SipcThread extends Thread{
     //private Map<String, String> portraitList;
     public FetionPictureVerification verification;
     public State state;
+    
+    public boolean pendingMsg = false;
+    
     public enum State {
     	INIT,
     	
@@ -70,6 +73,7 @@ public class SipcThread extends Thread{
         SEND_MSG_POSTPROCESSING,
         SEND_MSG_SUCC_ONLINE,
         SEND_MSG_SUCC_SMS,
+        SEND_MSG_RESPONSE_TIMEOUT,
         SEND_MSG_FAIL,
         
     	THREAD_EXIT,
@@ -87,6 +91,7 @@ public class SipcThread extends Thread{
     	SEND_SMS,
     	DROP,
     	EXIT,
+    	EXIT_AFTER_SEND,
     }
     public class ThreadCommand {
     	Command cmd;
@@ -337,11 +342,18 @@ public class SipcThread extends Thread{
 			m = (SipcResponse)parser.parse(is);
 		} catch (java.net.SocketTimeoutException e) {
 			Debugger.e( "send online msg command timed out:" + e.getMessage());
-			notifyState(State.SEND_MSG_FAIL, fm);
+			
+			SmsDbAdapter.insertSentSms(fm.contact.getSmsNumber(),
+					System.currentTimeMillis(), fm.msg);
+			notifyState(State.SEND_MSG_RESPONSE_TIMEOUT, fm);
+			
 			return;
 		} catch (Exception e) {
 			Debugger.e( "send online msg command failed:" + e.getMessage());
-			notifyState(State.SEND_MSG_FAIL, fm);
+			SmsDbAdapter.insertSentSms(fm.contact.getSmsNumber(),
+					System.currentTimeMillis(), fm.msg);
+			notifyState(State.SEND_MSG_RESPONSE_TIMEOUT, fm);
+			
 			return;
 		}
 		
@@ -402,13 +414,16 @@ public class SipcThread extends Thread{
 		} catch (java.net.SocketTimeoutException e) {
         	Debugger.e("timeout reading drop response: " + e.getMessage());
         	notifyState(State.DROP_SUCC, arg);
+        	pendingMsg = false;
         	return;
         } catch (Exception e) {
 			notifyState(State.DROP_SUCC, arg);
+			pendingMsg = false;
 			return;
 		}
 		if (res == null) {
 			notifyState(State.DROP_SUCC, arg);
+			pendingMsg = false;
 			return;
 		}
 		
@@ -420,9 +435,21 @@ public class SipcThread extends Thread{
 			// TODO: what to do?
 		}
 		notifyState(State.DROP_SUCC, arg);
-
+		pendingMsg = false;
     }
-    
+    private void doExitAfterSend()
+    {
+    	while (pendingMsg == true) {
+    		try  {
+    			Thread.sleep(1000, 0);
+    		} catch (Exception e) {
+    			
+    		}
+    	}
+    	notifyState(State.THREAD_EXIT, null);
+    	//popNotify("程序完全退出");
+    	Looper.myLooper().quit();
+    }
 
     private class WorkHandler extends Handler {
         @Override
@@ -452,6 +479,9 @@ public class SipcThread extends Thread{
                 break;
             case SEND_MSG:
             	doSendMsg((FetionMsg)tc.arg);
+            	break;
+            case EXIT_AFTER_SEND:
+            	doExitAfterSend();
             	break;
             default:
             	break;

@@ -7,7 +7,7 @@
 <TextView 
     android:text="@string/reason_first_login_instruction" 
     android:layout_width="200dip" 
-    android:textColor="#FF1010"
+    android:textColor="#A05050"
     android:layout_height="wrap_content"
     android:id="@+id/textAccSetText1"
     />

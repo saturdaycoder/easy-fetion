@@ -106,6 +106,7 @@ public class MsgHistory extends Activity
         		FetionContact fc = FetionDatabase.getInstance().getContactByUri(sipuri);
         		fm.contact = fc;
         		fm.msg = editMsgText.getText().toString();
+        		thread.pendingMsg = true;
         		thread.addCommand(Command.CONNECT_SIPC, fm);
         	}
         });
@@ -128,8 +129,7 @@ public class MsgHistory extends Activity
 			}
 			case CONNECTING_FAIL: {
 				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("msg failed to " + fm.contact.nickName
-						+ ": " + fm.msg + ", because of network error");
+				popNotify("不好意思，网络连接失败或超时，请重试。。。");
 				btnSend.setClickable(true);
 				editMsgText.setText(fm.msg);
         		editMsgText.setEnabled(true);
@@ -150,8 +150,8 @@ public class MsgHistory extends Activity
 				break;
 			case REGISTER_FAIL: {
 				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("msg failed to " + fm.contact.nickName
-						+ ": " + fm.msg + ", because of network error");
+				popNotify("给 " + fm.contact.nickName
+						+ "的消息发送失败了 :(  请重试。。。");
 				thread.addCommand(Command.DISCONNECT_SIPC, fm);
 				editMsgText.setText(fm.msg);
 				break;
@@ -183,8 +183,8 @@ public class MsgHistory extends Activity
 			}
 			case AUTHENTICATE_FAIL: {
 				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("msg failed to " + fm.contact.nickName
-						+ ": " + fm.msg + ", because of network error");
+				popNotify("给 " + fm.contact.nickName
+						+ "的消息发送失败了 :(  请重试。。。");
 				thread.addCommand(Command.DISCONNECT_SIPC, fm);
 				editMsgText.setText(fm.msg);
 				break;
@@ -196,8 +196,8 @@ public class MsgHistory extends Activity
 				break;
 			case SEND_MSG_SUCC_ONLINE: {
 				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("successfully sent msg via CLIENT to " + fm.contact.nickName
-						+ ": " + fm.msg);
+				popNotify(fm.contact.nickName
+						+ "的客户端成功接收了消息");
 				loadMsgList();
 				thread.addCommand(Command.DROP, fm);
 				editMsgText.setText("");
@@ -205,8 +205,8 @@ public class MsgHistory extends Activity
 			}
 			case SEND_MSG_SUCC_SMS: {
 				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("successfully sent msg via SMS to " + fm.contact.nickName
-						+ ": " + fm.msg);
+				popNotify(fm.contact.nickName
+						+ "的手机成功接收了消息（短信形式）");
 				loadMsgList();
 				editMsgText.setText("");
 				thread.addCommand(Command.DROP, fm);
@@ -214,8 +214,17 @@ public class MsgHistory extends Activity
 			}
 			case SEND_MSG_FAIL: {
 				FetionMsg fm = (FetionMsg)ss.arg;
-				popNotify("failed sent msg to " + fm.contact.nickName
-						+ ": " + fm.msg);
+				loadMsgList();
+				popNotify("给 " + fm.contact.nickName
+						+ "的消息发送失败了 :(  请重试。。。");
+				thread.addCommand(Command.DROP, fm);
+				editMsgText.setText(fm.msg);
+				break;
+			}
+			case SEND_MSG_RESPONSE_TIMEOUT: {
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("给 " + fm.contact.nickName
+						+ "的消息成功发送给了服务器但没得到对方接收确认");
 				thread.addCommand(Command.DROP, fm);
 				editMsgText.setText(fm.msg);
 				break;
@@ -231,6 +240,27 @@ public class MsgHistory extends Activity
 				thread.addCommand(Command.DISCONNECT_SIPC, fm);
 				break;
 			}
+			case NETWORK_DOWN:
+			{
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("不好意思，网络连接失败，请重试。。。");
+				btnSend.setClickable(true);
+				editMsgText.setText(fm.msg);
+        		editMsgText.setEnabled(true);
+				break;
+			}
+			case NETWORK_TIMEOUT:
+			{
+				FetionMsg fm = (FetionMsg)ss.arg;
+				popNotify("不好意思，网络连接超时，请重试。。。");
+				btnSend.setClickable(true);
+				editMsgText.setText(fm.msg);
+        		editMsgText.setEnabled(true);
+				break;
+			}
+			case THREAD_EXIT: 
+				//popNotify("程序完全退出");
+				break;
 			default:
 				break;
 			}
@@ -270,6 +300,13 @@ public class MsgHistory extends Activity
     	unregisterReceiver(receiver);
     	Debugger.d( "RECEIVER UNREGISTERED");
     	super.onStop();
+	}
+	@Override
+	protected void onDestroy() {
+    	//unregisterReceiver(receiver);
+    	//Debugger.d( "RECEIVER UNREGISTERED");
+		thread.addCommand(Command.EXIT_AFTER_SEND, null);
+    	super.onDestroy();
 	}
 	@Override
 	protected void onStart() {

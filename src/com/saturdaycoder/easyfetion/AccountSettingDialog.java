@@ -109,7 +109,7 @@ public class AccountSettingDialog extends Activity
 			return true;
 		}
 		else {
-			return false;
+			return super.onKeyDown(keyCode, msg);
 		}
 	}
 }

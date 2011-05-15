@@ -105,7 +105,7 @@ public class HttpThread extends Thread {
     		Debugger.d( "sent request: " + req.toString());
         	FetionHttpResponse res = (FetionHttpResponse)p.parse(is);
         	if (res != null) {
-        		Debugger.d( "received response: " + res.toString());
+        		//Debugger.d( "received response: " + res.toString());
         	}
         	if (res != null && res.getResponseCode() == 200) {
         		//fc.portrait = res.body;

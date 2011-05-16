@@ -40,10 +40,10 @@ public class AuthenticationSession {
 	{
 		SipcMessageParser parser = new SipcMessageParser();
 		this.response = (SipcResponse)parser.parse(is);
-		Debugger.warn( "auth response=:");
-		Debugger.warn(response.toString().substring(0,3000));
-		Debugger.warn(response.toString().substring(3000, 6000));
-		Debugger.warn(response.toString().substring(6000));
+		//Debugger.warn( "auth response=:");
+		//Debugger.warn(response.toString().substring(0,3000));
+		//Debugger.warn(response.toString().substring(3000, 6000));
+		//Debugger.warn(response.toString().substring(6000));
 	}
 	
 	public void postprocessJunk()

@@ -21,7 +21,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import com.saturdaycoder.easyfetion.SipcCommand.CommandType;
 import com.saturdaycoder.easyfetion.SipcMessage.Type;
-
+import java.util.ArrayList;
 
 
 public class SipcThread extends Thread{
@@ -274,8 +274,9 @@ public class SipcThread extends Thread{
     		return;
     	}
     	SipcResponse r = null;
+    	ArrayList<Byte> bytearray = new ArrayList<Byte>();
     	try {
-    		r = (SipcResponse)parser.parse(is);
+    		r = (SipcResponse)parser.parse(is, bytearray);
     	} catch (Exception e) {
     		Debugger.error("error receiving SUB response: " + e.getMessage());
     		notifyState(State.CONTACT_GET_FAIL, null);
@@ -287,8 +288,11 @@ public class SipcThread extends Thread{
     		return;
     	}
 
-    	int count = contactList.size() + 1;
+    	int count = contactList.size();
     	int j = 0;
+    	
+    	//if (contactList.containsKey("))
+    	
     	while (true) {
     		/*int available = -1;
     		try {
@@ -302,16 +306,15 @@ public class SipcThread extends Thread{
     			Debugger.info("no more available bits, exit loop");
     			break;
     		}*/
+    		SipcMessage m = null;
     		SipcCommand c = null;
+    		
+    		
+    		
         	try {
-        		c = (SipcCommand)parser.parse(is);
-        		Debugger.info(c.toString());
-        		if (c.getCommandType() != CommandType.BENOTIFY 
-        				|| !c.getHeaderValue("N").equals("PresenceV4")) {
-        			Debugger.warn("non BENOTIFY or Presence command. ignore");
-        			
-        			continue;
-        		}
+        		m = (SipcMessage)parser.parse(is, bytearray);
+        		Debugger.info(m.toString());
+        		
         	} catch (java.net.SocketTimeoutException timeoute) {
         		Debugger.error("timeout receiving SUB response: " + timeoute.getMessage());
         		notifyState(State.CONTACT_GET_FAIL, null);
@@ -321,6 +324,19 @@ public class SipcThread extends Thread{
         		notifyState(State.CONTACT_GET_FAIL, null);
         		return;
         	}
+        	
+        	if (m.getType() != Type.TYPE_REQUEST) {
+        		Debugger.warn("non-REQUEST, skip");
+        		continue;
+        	}
+        	
+        	c = (SipcCommand)m;
+        	if (c.getCommandType() != CommandType.BENOTIFY 
+    				|| !c.getHeaderValue("N").equals("PresenceV4")) {
+    			Debugger.warn("non BENOTIFY or Presence command. ignore");
+    			
+    			continue;
+    		}
         	
         	try {
         		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance(); 
@@ -333,6 +349,22 @@ public class SipcThread extends Thread{
         			
         			Node cnode = nl.item(i);
 	    			String userid = cnode.getAttributes().getNamedItem("id").getNodeValue();
+	    			
+	    			if (userid.equals(sysConfig.userId)) {
+	    				Debugger.warn("Found myself");
+	    				if (!contactList.containsKey(sysConfig.userUri)) {
+	    					FetionContact fc = new FetionContact();
+		    				fc.sipUri = sysConfig.userUri;
+		    				fc.userId = sysConfig.userId;
+		    				fc.sId = sysConfig.sId;
+		    				fc.mobileNumber = sysConfig.mobileNumber;
+		    				fc.nickName = cnode.getFirstChild().getAttributes().getNamedItem("n").getNodeValue();
+		    				contactList.put(sysConfig.userUri, fc);
+		    				
+		    				continue;
+	    				}
+	    			}
+	    			
 	    			Node pnode = cnode.getFirstChild();
 	    			String sipuri = pnode.getAttributes().getNamedItem("su").getNodeValue();
 	    			FetionContact fc = null;
@@ -346,10 +378,16 @@ public class SipcThread extends Thread{
 	    			}
 	    			Debugger.warn("Got NOTIFY of contact " + sipuri);
 	    			fc.userId = userid;
-	    			fc.mobileNumber = pnode.getAttributes().getNamedItem("m").getNodeValue();
-	    			fc.nickName = pnode.getAttributes().getNamedItem("n").getNodeValue();
-	    			fc.localName = pnode.getAttributes().getNamedItem("i").getNodeValue();
+	    			try {
+	    				fc.mobileNumber = pnode.getAttributes().getNamedItem("m").getNodeValue();
+	    			} catch (Exception e) {}
+	    			try {
+	    				fc.nickName = pnode.getAttributes().getNamedItem("n").getNodeValue();
+	    			} catch (Exception e) {}
 	    			
+	    			try {
+	    				fc.impression = pnode.getAttributes().getNamedItem("i").getNodeValue();
+	    			} catch (Exception e) {}
 	    			j++;
 	        	}
         		if (j == count) {

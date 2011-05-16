@@ -494,8 +494,8 @@ public class EasyFetion extends Activity
 		    		map.put("FetionImage", R.drawable.contact_default);
 		    	}
 		    }
-		    map.put("FetionNickName", nn); 
-		    map.put("FetionMobileNo", mn); 
+		    map.put("FetionNickName", nn + "(" + mn + ")"); 
+		    map.put("FetionMobileNo", c.impression); 
 		    listItem.add(map); 
 		} 
 		SimpleAdapter listItemAdapter = new SimpleAdapter(EasyFetion.this,

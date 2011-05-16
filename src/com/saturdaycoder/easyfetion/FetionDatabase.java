@@ -79,9 +79,10 @@ public class FetionDatabase extends SQLiteOpenHelper
 				+ " hobby TEXT DEFAULT '', "
 				+ " score_level INTEGER DEFAULT -1)");
 		db.execSQL("CREATE TABLE user (sid TEXT primary key, "
-				+ " password TEXT, "
-				+ " userid TEXT, "
-				+ " mobile_number TEXT, "
+				+ " password TEXT DEFAULT '', "
+				+ " userid TEXT DEFAULT '', "
+				+ " mobile_number TEXT DEFAULT '', "
+				+ " sipuri TEXT DEFAULT '',"
 				
 				+ " config_servers_version TEXT DEFAULT '', "
 				+ " config_parameters_version TEXT DEFAULT '', "
@@ -330,16 +331,18 @@ public class FetionDatabase extends SQLiteOpenHelper
 			db.execSQL("update user set password='" + savedPasswd + "'"
 					+ ", userId='" + sysConfig.userId + "'"
 					+ ", mobile_number='" + sysConfig.mobileNumber + "'"
+					+ ", sipuri='" + sysConfig.userUri + "'"
 					+ " where sid='" + sysConfig.sId + "'");
 			Debugger.debug( "DB UPDATE ACC");
 		}
 		// if not exist, insert new
 		else {
-			db.execSQL("insert into user (sid, password, userid, mobile_number) "
+			db.execSQL("insert into user (sid, password, userid, mobile_number, sipuri) "
 				+ "select '" + sysConfig.sId + "', "
 				+ "'" + savedPasswd + "', "
 				+ "'" + sysConfig.userId + "', "
-				+ "'" + sysConfig.mobileNumber + "' " 
+				+ "'" + sysConfig.mobileNumber + "', "
+				+ "'" + sysConfig.userUri + "' " 
 				+ " where not exists (select * from user where sid = '" 
 				+ sysConfig.sId + "')");
 			Debugger.debug( "INSERT NEW ACC");
@@ -370,6 +373,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 			sysConfig.userPassword = plainPasswd;
 			sysConfig.userId = cursor.getString(2);
 			sysConfig.mobileNumber = cursor.getString(3);
+			sysConfig.userUri = cursor.getString(4);
 			Debugger.verbose( "passwd=" + sysConfig.userPassword
 					+ " mobileno=" + sysConfig.mobileNumber);
 		}
@@ -380,6 +384,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 			sysConfig.userPassword = "";
 			sysConfig.userId = "";
 			sysConfig.mobileNumber = "";
+			sysConfig.userUri = "";
 		}
 	}
 	
@@ -406,17 +411,17 @@ public class FetionDatabase extends SQLiteOpenHelper
 		
 		if (cursor.moveToFirst()) 
 		{
-			sysConfig.configServersVersion = cursor.getString(4);;
-			sysConfig.configParametersVersion =cursor.getString(5);
-			sysConfig.configHintsVersion = cursor.getString(6);
-			sysConfig.sipcProxyIp = cursor.getString(7);
-			sysConfig.sipcProxyPort = cursor.getInt(8);
-			sysConfig.portraitServersName = cursor.getString(9);
-			sysConfig.portraitServersPath = cursor.getString(10);
-			sysConfig.personalVersion = cursor.getString(11);
-			sysConfig.customConfigVersion = cursor.getString(12);
-			sysConfig.contactVersion = cursor.getString(13);
-			sysConfig.ssic = cursor.getString(14);
+			sysConfig.configServersVersion = cursor.getString(5);;
+			sysConfig.configParametersVersion =cursor.getString(6);
+			sysConfig.configHintsVersion = cursor.getString(7);
+			sysConfig.sipcProxyIp = cursor.getString(8);
+			sysConfig.sipcProxyPort = cursor.getInt(9);
+			sysConfig.portraitServersName = cursor.getString(10);
+			sysConfig.portraitServersPath = cursor.getString(11);
+			sysConfig.personalVersion = cursor.getString(12);
+			sysConfig.customConfigVersion = cursor.getString(13);
+			sysConfig.contactVersion = cursor.getString(14);
+			sysConfig.ssic = cursor.getString(15);
 		}
 		else
 		{

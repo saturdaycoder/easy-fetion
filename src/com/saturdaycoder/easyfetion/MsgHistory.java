@@ -7,6 +7,7 @@ import android.content.Context;
 import android.os.*;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -83,7 +84,9 @@ public class MsgHistory extends Activity
 		msgno = bundle.getString("msgno");
 		nickname = bundle.getString("nickname");
 		
-			
+		int inputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        inputMode=inputMode|WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
+        getWindow().setSoftInputMode(inputMode);
 		
 		//TextView title = (TextView)findViewById(R.id.contactListItemName); 
 		//title.setText(nickname);

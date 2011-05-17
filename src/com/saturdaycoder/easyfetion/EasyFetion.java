@@ -1,5 +1,6 @@
 package com.saturdaycoder.easyfetion;
 import java.io.*;
+import android.view.WindowManager;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.app.Activity;
@@ -142,6 +143,7 @@ public class EasyFetion extends Activity
     		case CONTACT_GETTING:
     			break;
     		case CONTACT_GET_SUCC: {
+    			
 				loginThread.addCommand(HttpThread.Command.GET_PORTRAIT, contactList);
 				FetionDatabase.getInstance().setUserInfo(sysConfig);
 				
@@ -322,6 +324,10 @@ public class EasyFetion extends Activity
         loginThread.start();
         refreshThread.start();
         
+        int inputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        inputMode=inputMode|WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
+        getWindow().setSoftInputMode(inputMode);
+        
         
         lvContacts.setOnItemClickListener(new OnItemClickListener() {
         	@Override
@@ -352,9 +358,37 @@ public class EasyFetion extends Activity
         	}
         });
         
-        //ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        //Debugger.error("Network " + cm.getActiveNetworkInfo().getTypeName() + " detail: " + cm.getActiveNetworkInfo().getSubtypeName());
+    	sysConfig = SystemConfig.getInstance();
+    	
+    	FetionDatabase.getInstance().getAccount(sysConfig);
+    	
+    	if (sysConfig.sId == "") {
+    		lastLoginAcc = "";
+        	Intent intent = new Intent();
+			intent.setClass(EasyFetion.this, AccountSettingDialog.class);
+			Bundle bundle = new Bundle();
+			bundle.putString("lastlogin", lastLoginAcc);
+			bundle.putInt("reason", 0);
+			intent.putExtras(bundle);
+			startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
+    	}
+    	else {
+    		lastLoginAcc = sysConfig.mobileNumber;
+    		FetionDatabase.getInstance().getUserInfo(sysConfig);
+    		Debugger.debug( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
+    		if (sysConfig.sipcProxyIp == "" || sysConfig.sipcProxyPort == -1) {
 
+    		}
+    		else {
+    			
+    			FetionContact contacts[] = FetionDatabase.getInstance().getContacts();
+    			for (FetionContact c: contacts) {
+    				contactList.put(c.sipUri, c);
+    			}
+    			
+    			loadContactList();
+    		}
+    	}
     }
     
     @Override
@@ -433,37 +467,7 @@ public class EasyFetion extends Activity
     	Debugger.info( "QUICKFETION ONSTART");
     	super.onStart();
     	
-    	sysConfig = SystemConfig.getInstance();//new SystemConfig();
-    	
-    	FetionDatabase.getInstance().getAccount(sysConfig);
-    	
-    	if (sysConfig.sId == "") {
-    		lastLoginAcc = "";
-        	Intent intent = new Intent();
-			intent.setClass(EasyFetion.this, AccountSettingDialog.class);
-			Bundle bundle = new Bundle();
-			bundle.putString("lastlogin", lastLoginAcc);
-			bundle.putInt("reason", 0);
-			intent.putExtras(bundle);
-			startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
-    	}
-    	else {
-    		lastLoginAcc = sysConfig.mobileNumber;
-    		FetionDatabase.getInstance().getUserInfo(sysConfig);
-    		Debugger.debug( "SIPC = " + sysConfig.sipcProxyIp + ":" + sysConfig.sipcProxyPort);
-    		if (sysConfig.sipcProxyIp == "" || sysConfig.sipcProxyPort == -1) {
 
-    		}
-    		else {
-    			
-    			FetionContact contacts[] = FetionDatabase.getInstance().getContacts();
-    			for (FetionContact c: contacts) {
-    				contactList.put(c.sipUri, c);
-    			}
-    			
-    			loadContactList();
-    		}
-    	}
     }
     
     private void loadContactList() {
@@ -612,21 +616,23 @@ public class EasyFetion extends Activity
 				bundle.putInt("reason", 1);
 				intent.putExtras(bundle);
 				
-				sysConfig.mobileNumber = "";
+				/*sysConfig.mobileNumber = "";
 				sysConfig.userPassword = "";
 				sysConfig.sId = "";
-				sysConfig.userId = "";
-				
+				sysConfig.userId = "";*/
+				sysConfig.reset();
+				contactList.clear();
 				
 				startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
                 break;  
             case MENU_REFRESH_ID:  
             	sysConfig.sId = "";
 				sysConfig.userId = "";
+				contactList.clear();
 				showDialog(DIALOG_REFRESH_PROGRESS);
 				FetionDatabase.getInstance().clearContacts();
 	    		sysConfig.contactVersion = "0";
-    		
+	    		
 				loginThread.addCommand(Command.LOGIN, null);
                 break;  
             case MENU_ABOUT_ID:  

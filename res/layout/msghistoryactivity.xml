@@ -22,7 +22,7 @@
     android:cacheColorHint="#00000000"
     android:clickable="true" 
     android:choiceMode="singleChoice"
-    android:listSelector="@drawable/msglistitembk"
+    
      />
 <EditText 
     android:id="@+id/editMsgText" 

@@ -15,4 +15,6 @@
     <string name="menu_set_account">设置账户</string>
     <string name="menu_refresh_contact_list">刷新列表</string>
     <string name="menu_about">关于</string>
+    <string name="popup_login_failure">登录失败了，检查一下账号和密码有没有写错</string>
+
 </resources>

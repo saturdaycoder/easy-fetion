@@ -60,6 +60,44 @@ public class SystemConfig {
 		return instance;
 	}
 	
+	public void reset() {
+		Debugger.debug( "SYSTEMCONFIG CTOR");
+		
+		publicIp = "";
+		lastLoginIp = "";
+		lastLoginPlace = "";
+		lastLoginTime = "";
+		ssic = "";
+		contacts = new ArrayList<FetionContact>();
+		
+		sId = "";
+		userId = "";
+		userUri = "";
+		configServersVersion = "";
+		configParametersVersion = "";
+		configHintsVersion = "";
+		sipcProxyIp = "";
+		sipcProxyPort = -1;
+		//clientType = "PC";
+		//clientPlatform = "W5.1";
+		portraitServersName = "";
+		portraitServersPath = "";
+		mobileNumber = "";
+		userPassword = "";
+		/*ssiHostName = "uid.fetion.com.cn";
+		ssiHostIp = "221.130.45.212";
+		fetionDomainName = "fetion.com.cn:";
+		navHostName = "nav.fetion.com.cn";
+		navHostIp = "221.130.45.201";
+		protocolVersion = "4.0.2510";*/
+		
+		personalVersion = "";
+		customConfigVersion = "";
+		contactVersion = "";
+		
+		state = 0;
+	}
+	
 	protected SystemConfig(){
 		
 		Debugger.debug( "SYSTEMCONFIG CTOR");

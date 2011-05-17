@@ -325,7 +325,9 @@ public class FetionDatabase extends SQLiteOpenHelper
 		// try update
 		Cursor cursor = db.rawQuery("select * from user", null);
 		if (cursor.moveToFirst()) {
-			cursor = db.rawQuery("select * from user where sid<>'" 
+			db.execSQL("delete from user");
+			Debugger.debug( "DELETE EXISTING ACC");
+			/*cursor = db.rawQuery("select * from user where sid<>'" 
 					+ sysConfig.sId + "'", null);
 			if (cursor.moveToFirst()) {
 				Debugger.debug( "DB DELETE NOT MATCHING ACC");
@@ -335,21 +337,21 @@ public class FetionDatabase extends SQLiteOpenHelper
 					+ ", userId='" + sysConfig.userId + "'"
 					+ ", mobile_number='" + sysConfig.mobileNumber + "'"
 					+ ", sipuri='" + sysConfig.userUri + "'"
-					+ " where sid='" + sysConfig.sId + "'");
-			Debugger.debug( "DB UPDATE ACC");
+					+ " where sid='" + sysConfig.sId + "'");*/
+			//Debugger.debug( "DB UPDATE ACC");
 		}
 		// if not exist, insert new
-		else {
-			db.execSQL("insert into user (sid, password, userid, mobile_number, sipuri) "
-				+ "select '" + sysConfig.sId + "', "
-				+ "'" + savedPasswd + "', "
-				+ "'" + sysConfig.userId + "', "
-				+ "'" + sysConfig.mobileNumber + "', "
-				+ "'" + sysConfig.userUri + "' " 
-				+ " where not exists (select * from user where sid = '" 
-				+ sysConfig.sId + "')");
-			Debugger.debug( "INSERT NEW ACC");
-		}
+		//else {
+		db.execSQL("insert into user (sid, password, userid, mobile_number, sipuri) "
+			+ "select '" + sysConfig.sId + "', "
+			+ "'" + savedPasswd + "', "
+			+ "'" + sysConfig.userId + "', "
+			+ "'" + sysConfig.mobileNumber + "', "
+			+ "'" + sysConfig.userUri + "' " 
+			+ " where not exists (select * from user where sid = '" 
+			+ sysConfig.sId + "')");
+		Debugger.debug( "INSERT NEW ACC");
+		//}
 	}
 	
 	public void getAccount(SystemConfig sysConfig)

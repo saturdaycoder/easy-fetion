@@ -1,5 +1,6 @@
 package com.saturdaycoder.easyfetion;
 import android.app.*;
+import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.Button;
 import android.widget.Toast;
@@ -17,6 +18,12 @@ public class AccountSettingDialog extends Activity
 	private String mobileno;
 	private String passwd;
 	
+	private int[] reasons = new int[] {
+			R.string.reason_first_login_instruction,
+			R.string.reason_reset_account,
+			R.string.reason_login_passwd_error,
+	};
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -28,6 +35,9 @@ public class AccountSettingDialog extends Activity
 		intent = this.getIntent();
 		bundle = intent.getExtras();
 		String lastLogin = bundle.getString("lastlogin");
+		int reason = bundle.getInt("reason");
+		TextView tv = (TextView)findViewById(R.id.textAccSetText1);
+		tv.setText(reasons[reason]);
 		editMobileno.setText(lastLogin);
 		
 		btnOk.setOnClickListener(new Button.OnClickListener() {

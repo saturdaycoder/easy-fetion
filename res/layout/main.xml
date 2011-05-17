@@ -11,7 +11,8 @@
     android:layout_alignParentBottom="true"
     android:layout_below="@+id/textContactList"
     android:cacheColorHint="#00000000"
-    android:background="@drawable/grey" android:animationCache="false"/>
+    android:background="@drawable/grey" 
+    android:animationCache="false"/>
 <TextView 
 	android:layout_width="150dip" 
 	android:layout_height="30dip" 	

@@ -304,8 +304,10 @@ public class EasyFetion extends Activity
  
         Network.setActivity(this);
         
-        FetionDatabase.setInstance(this);
-        SmsDbAdapter.setContext(this);
+        if (!FetionDatabase.isInit())
+        	FetionDatabase.setInstance(this);
+        if (!SmsDbAdapter.isInit())
+        	SmsDbAdapter.setContext(this);
         
         sysConfig = SystemConfig.getInstance();
         refreshUiHandler = new RefreshUiHandler();
@@ -350,8 +352,8 @@ public class EasyFetion extends Activity
         	}
         });
         
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        Debugger.error("Network " + cm.getActiveNetworkInfo().getTypeName() + " detail: " + cm.getActiveNetworkInfo().getSubtypeName());
+        //ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        //Debugger.error("Network " + cm.getActiveNetworkInfo().getTypeName() + " detail: " + cm.getActiveNetworkInfo().getSubtypeName());
 
     }
     
@@ -441,6 +443,7 @@ public class EasyFetion extends Activity
 			intent.setClass(EasyFetion.this, AccountSettingDialog.class);
 			Bundle bundle = new Bundle();
 			bundle.putString("lastlogin", lastLoginAcc);
+			bundle.putInt("reason", 0);
 			intent.putExtras(bundle);
 			startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
     	}
@@ -465,6 +468,15 @@ public class EasyFetion extends Activity
     
     private void loadContactList() {
     	ArrayList<HashMap<String, Object>> listItem = new ArrayList<HashMap<String, Object>>(); 
+        int reslist[] = new int[] {
+        	//R.drawable.contact_default,
+            R.drawable.contact_photo_1,
+            R.drawable.contact_photo_2,
+            R.drawable.contact_photo_3,
+            R.drawable.contact_photo_4,
+            
+        };
+        int photoindex = 0;
 		Iterator<String> iter = contactList.keySet().iterator();
 		while(iter.hasNext())
 		{ 
@@ -486,12 +498,16 @@ public class EasyFetion extends Activity
 		    } catch (FileNotFoundException e) {
 		    }
 		    if (fis == null) {
-		    	map.put("FetionImage", R.drawable.contact_default);
+		    	//map.put("FetionImage", reslist[Integer.parseInt(c.userId) % reslist.length ]);
+		    	map.put("FetionImage", reslist[photoindex]);
+                photoindex = (photoindex + 1) % reslist.length;
 		    } else {
 		    	try {
 		    		map.put("FetionImage", "/data/data/com.saturdaycoder.easyfetion/files/" + potraitfile);
 		    	} catch (Exception e) {
-		    		map.put("FetionImage", R.drawable.contact_default);
+		    		//map.put("FetionImage", R.drawable.contact_default);
+		    		map.put("FetionImage", reslist[photoindex]);
+	                photoindex = (photoindex + 1) % reslist.length;
 		    	}
 		    }
 		    map.put("FetionNickName", nn + "(" + mn + ")"); 
@@ -540,7 +556,14 @@ public class EasyFetion extends Activity
     	Debugger.info( "QUICKFETION ONSTOP");
     	super.onStop();
     }
-    @Override
+    @Override 
+	public void onConfigurationChanged(Configuration newConfig) {
+		Debugger.info( "QUICKFETION ONCONFIGURATIONCHANGED: " + newConfig.toString());
+		super.onConfigurationChanged(newConfig); 
+	
+	}
+
+	@Override
     protected void onDestroy()
     {
 
@@ -561,13 +584,6 @@ public class EasyFetion extends Activity
     	Debugger.info( "QUICKFETION ONSAVEINSTANCESTATE");
     	super.onSaveInstanceState(outState);
     }
-    @Override 
-    public void onConfigurationChanged(Configuration newConfig) {
-    	Debugger.info( "QUICKFETION ONCONFIGURATIONCHANGED: " + newConfig.toString());
-    	super.onConfigurationChanged(newConfig); 
-
-    }
-    
     //@Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
     {
@@ -593,6 +609,7 @@ public class EasyFetion extends Activity
 				intent.setClass(EasyFetion.this, AccountSettingDialog.class);
 				Bundle bundle = new Bundle();
 				bundle.putString("lastlogin", lastLoginAcc);
+				bundle.putInt("reason", 1);
 				intent.putExtras(bundle);
 				
 				sysConfig.mobileNumber = "";
@@ -627,7 +644,7 @@ public class EasyFetion extends Activity
                 dialog.setTitle("登录");
                 dialog.setMessage("请稍候。。。");
                 dialog.setIndeterminate(true);
-                dialog.setCancelable(true);
+                dialog.setCancelable(false);
                 return dialog;
             }
             case DIALOG_REFRESH_PROGRESS: {
@@ -635,7 +652,7 @@ public class EasyFetion extends Activity
                 dialog.setTitle("刷新列表");
                 dialog.setMessage("请稍候。。。");
                 dialog.setIndeterminate(true);
-                dialog.setCancelable(true);
+                dialog.setCancelable(false);
                 return dialog;
             }
         }

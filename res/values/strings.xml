@@ -3,14 +3,15 @@
     <string name="app_name">飞信随手发</string>
     <string name="button_send_text">发送</string>
     <string name="button_cancel_text">取消</string>
-    <string name="nickname_invalid">无效昵称</string>
-    <string name="mobileno_invalid">无效电话号码</string>
+    <string name="nickname_invalid">未设定昵称</string>
+    <string name="mobileno_invalid">未公开号码</string>
     <string name="button_login_text">登录</string>
     <string name="button_authenticate_text">验证</string>
     <string name="text_user_mobileno">手机号码</string>
     <string name="text_user_password">飞信密码</string>
     <string name="reason_first_login_instruction">您还没有设置飞信账号，请在下面的输入框中输入您的手机号码和飞信密码。</string>
     <string name="reason_login_passwd_error">您输入的账号和密码不正确。</string>
+    <string name="reason_reset_account">请输入新的账号和密码。</string>
     <string name="menu_set_account">设置账户</string>
     <string name="menu_refresh_contact_list">刷新列表</string>
     <string name="menu_about">关于</string>

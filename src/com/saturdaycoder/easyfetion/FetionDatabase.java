@@ -34,6 +34,9 @@ public class FetionDatabase extends SQLiteOpenHelper
 			
 		}
 	}
+	public static boolean isInit() {
+		return (instance != null);
+	}
 	
 	protected static FetionDatabase instance = null;
 	public static void setInstance(Context context) 
@@ -121,26 +124,26 @@ public class FetionDatabase extends SQLiteOpenHelper
 		if (cursor.moveToFirst()) {
 			Debugger.debug( "update contact " + contact.sipUri);
 			db.execSQL("update contacts set uri='" + contact.sipUri + "',"
-				+ "version='"+contact.version+"',"//+ " version TEXT, "
-				+ "sid='" + contact.userId + "',"//+ " sid TEXT, "
-				+ "mobile_no='" + contact.mobileNumber + "',"//+ " mibile_no TEXT, "
+				+ "version='"+contact.version+"',"
+				+ "sid='" + contact.userId + "',"
+				+ "mobile_no='" + contact.mobileNumber + "',"
 				//+ " basic_service_status INTEGER, "
-				+ "carrier='" + contact.carrier + "',"//+ " carrier TEXT, "
-				+ "carrier_status=" + contact.carrierStatus + ","//+ " carrier_status INTEGER, "
-				+ "portrait_crc='" + contact.portraitCrc + "',"//+ " portrait_crc TEXT, "
-				+ "name='" + contact.localName + "',"//+ " name TEXT, "
-				+ "nickname='" + contact.nickName + "',"//+ " nickname TEXT, "
-				+ "gender=" + contact.gender + ","//+ " gender INTEGER, "
-				+ "birth_date='" + contact.birthday + "',"//+ " birth_date TEXT, "
+				+ "carrier='" + contact.carrier + "',"
+				+ "carrier_status=" + contact.carrierStatus + ","
+				+ "portrait_crc='" + contact.portraitCrc + "',"
+				+ "name='" + contact.localName.replace("'", "''") + "',"
+				+ "nickname='" + contact.nickName.replace("'", "''") + "',"
+				+ "gender=" + contact.gender + ","
+				+ "birth_date='" + contact.birthday + "',"
 				//+ " birthday_valid INTEGER, "
-				+ "impresa='" + contact.impression + "',"//+ " impresa TEXT, "
+				+ "impresa='" + contact.impression + "',"
 				//+ " carrier_region TEXT, "
 				//+ " user_region TEXT, "
 				//+ " profile TEXT, "
 				//+ " blood_type INTEGER, "
 				//+ " occupation TEXT, "
 				//+ " hobby TEXT, "
-				+ "score_level=" + contact.scoreLevel);//+ " score_level INTEGER)");
+				+ "score_level=" + contact.scoreLevel);
 				
 
 		}
@@ -152,8 +155,8 @@ public class FetionDatabase extends SQLiteOpenHelper
 					"score_level) values('" + contact.sipUri + "', '" + contact.version
 					+ "','" + contact.userId + "','" + contact.mobileNumber + "','"
 					+ contact.carrier + "'," + contact.carrierStatus + ",'"
-					+ contact.portraitCrc + "','" + contact.localName + "','"
-					+ contact.nickName + "'," + contact.gender + ",'"
+					+ contact.portraitCrc + "','" + contact.localName.replace("'", "''") + "','"
+					+ contact.nickName.replace("'", "''") + "'," + contact.gender + ",'"
 					+ contact.birthday + "','" + contact.impression + "',"
 					+ contact.scoreLevel + ")");
 		}

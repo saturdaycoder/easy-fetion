@@ -156,7 +156,7 @@ public class SipcThread extends Thread{
 
     private void doConnectSipc(Object arg) {
     	notifyState(State.CONNECTING_SIPC, arg);
-        try {
+    	try {
         	Network.closeSipcSocket();
         	Network.createSipcSocket(sysConfig.sipcProxyIp, sysConfig.sipcProxyPort);
         	is = Network.getSipcInputStream();
@@ -166,6 +166,7 @@ public class SipcThread extends Thread{
         	Debugger.error( "error re-create sipc socket: " + e.getMessage());
         	notifyState(State.CONNECTING_FAIL, arg);
         }
+		
     }
     private void doDisconnectSipc(Object arg) {
     	notifyState(State.DISCONNECTING_SIPC, arg);
@@ -175,7 +176,7 @@ public class SipcThread extends Thread{
         	os = null;
         	notifyState(State.DISCONNECTING_SUCC, arg);                	
         } catch (Exception e) {
-        	Debugger.error( "error close sipc socket: " + e.getMessage());
+        	Debugger.error( "error close sipc socket: " + e.toString());
         	notifyState(State.DISCONNECTING_FAIL, arg);
         }
     }
@@ -197,11 +198,11 @@ public class SipcThread extends Thread{
         try {
         	reg.read();
         } catch (java.net.SocketTimeoutException e) {
-        	Debugger.error("timeout reading reg response: " + e.getMessage());
+        	Debugger.error("timeout reading reg response: " + e.toString());
         	notifyState(State.NETWORK_TIMEOUT, arg);
         	return;
         } catch (Exception e) {
-        	Debugger.error("error reading reg response: " + e.getMessage());
+        	Debugger.error("error reading reg response: " + e.toString());
         	notifyState(State.REGISTER_FAIL, arg);
         	return;
         }
@@ -268,6 +269,7 @@ public class SipcThread extends Thread{
     	SipcSubscribeCommand cmd = new SipcSubscribeCommand(sysConfig.sId);
     	try {
     		os.write(cmd.toString().getBytes());
+    		Debugger.debug("sent SUB command: " + cmd.toString());
     	} catch (Exception e) {
     		Debugger.error("error sending SUB command: " + e.getMessage());
     		notifyState(State.CONTACT_GET_FAIL, null);
@@ -291,38 +293,25 @@ public class SipcThread extends Thread{
     	int count = contactList.size();
     	int j = 0;
     	
-    	//if (contactList.containsKey("))
+    	ArrayList<String> urilist = new ArrayList<String>();
     	
     	while (true) {
-    		/*int available = -1;
-    		try {
-    			available = is.available();
-    		} catch (Exception e) {
-    			Debugger.error("error getting available bit count from SIPC inputstream: " + e.getMessage());
-    			continue;
-    		}
-    		
-    		if (available == 0) {
-    			Debugger.info("no more available bits, exit loop");
-    			break;
-    		}*/
     		SipcMessage m = null;
     		SipcCommand c = null;
-    		
-    		
-    		
         	try {
         		m = (SipcMessage)parser.parse(is, bytearray);
         		Debugger.info(m.toString());
         		
         	} catch (java.net.SocketTimeoutException timeoute) {
         		Debugger.error("timeout receiving SUB response: " + timeoute.getMessage());
-        		notifyState(State.CONTACT_GET_FAIL, null);
-        		return;
+        		//notifyState(State.CONTACT_GET_FAIL, null);
+        		//return;
+        		break;
         	} catch (IOException e) {
         		Debugger.error("error receiving SUB response: " + e.getMessage());
-        		notifyState(State.CONTACT_GET_FAIL, null);
-        		return;
+        		//notifyState(State.CONTACT_GET_FAIL, null);
+        		//return;
+        		break;
         	}
         	
         	if (m.getType() != Type.TYPE_REQUEST) {
@@ -351,7 +340,7 @@ public class SipcThread extends Thread{
 	    			String userid = cnode.getAttributes().getNamedItem("id").getNodeValue();
 	    			
 	    			if (userid.equals(sysConfig.userId)) {
-	    				Debugger.warn("Found myself");
+	    				/*Debugger.warn("Found myself");
 	    				if (!contactList.containsKey(sysConfig.userUri)) {
 	    					FetionContact fc = new FetionContact();
 		    				fc.sipUri = sysConfig.userUri;
@@ -362,7 +351,8 @@ public class SipcThread extends Thread{
 		    				contactList.put(sysConfig.userUri, fc);
 		    				
 		    				continue;
-	    				}
+	    				}*/
+	    				continue;
 	    			}
 	    			
 	    			Node pnode = cnode.getFirstChild();
@@ -370,11 +360,13 @@ public class SipcThread extends Thread{
 	    			FetionContact fc = null;
 	    			if (contactList.containsKey(sipuri)) {
 	    				fc = contactList.get(sipuri);
+	    				urilist.add(sipuri);
 	    			}
 	    			else {
-	    				fc = new FetionContact();
+	    				/*fc = new FetionContact();
 	    				fc.sipUri = sipuri;
-	    				contactList.put(sipuri, fc);
+	    				contactList.put(sipuri, fc);*/
+	    				continue;
 	    			}
 	    			Debugger.warn("Got NOTIFY of contact " + sipuri);
 	    			fc.userId = userid;
@@ -403,7 +395,18 @@ public class SipcThread extends Thread{
 	        
 	        
     	}
-           
+        
+    	Iterator<String> iter = contactList.keySet().iterator();
+        while (iter.hasNext())
+        {
+        	//notifyState(State.CONTACT_GETTING, null);
+        	String uri = iter.next();
+        	if (urilist.contains(uri))
+        		continue;
+        	FetionContact fc = contactList.get(uri);
+        	doGetContact(fc);
+        }
+    	
         notifyState(State.CONTACT_GET_SUCC, null);
     }
     

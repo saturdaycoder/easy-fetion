@@ -12,6 +12,10 @@ public class SipcMessageParser extends SocketMessageParser
 		
 		boolean reparse = false;
 		len = is.read(output);
+		
+		if (len == -1)
+			return null;
+		
 		str = new String(output, 0, len, "UTF-8");
 		SipcMessage resp1 = (SipcMessage)this.parse(str);
 		String headerL = resp1.getHeaderValue("L");
@@ -28,6 +32,9 @@ public class SipcMessageParser extends SocketMessageParser
 			
 			int rc = (totallen + headerlen - len > 2048)? 2048: (totallen + headerlen - len);
 			int l = is.read(output, 0, rc);
+			
+			if (l == -1)
+				break;
 			
 			str += new String(output, 0, l, "UTF-8");
 			len += l;

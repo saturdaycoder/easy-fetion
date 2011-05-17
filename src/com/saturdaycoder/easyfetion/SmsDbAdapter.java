@@ -53,6 +53,10 @@ public class SmsDbAdapter
 
 	}
 	
+	public static boolean isInit() {
+		return (cr == null)? false: true;
+	}
+	
 	public static void setContext(Context context)
 	{
 		cr = context.getContentResolver();

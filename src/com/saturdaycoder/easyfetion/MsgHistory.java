@@ -5,7 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
 import android.os.*;
+import android.view.KeyEvent;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -17,10 +19,17 @@ import java.util.HashMap;
 import android.telephony.gsm.SmsMessage;
 import android.content.IntentFilter;
 import android.os.Vibrator;
+
 import com.saturdaycoder.easyfetion.SipcThread.Command;
 import com.saturdaycoder.easyfetion.SipcThread.State;
 import com.saturdaycoder.easyfetion.SipcThread.ThreadState;
 import android.view.*;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.view.ContextMenu.*;
+import android.view.Menu;
+import android.text.ClipboardManager;
 public class MsgHistory extends Activity
 {
 	private Intent intent;
@@ -40,13 +49,33 @@ public class MsgHistory extends Activity
 	private String nickname = null;
 	private String sipuri = null;
 	
+	private boolean isSending = false;
+	
 	private Vibrator vb = null;
 	private SoundPool sp = null;
 	private int newsmshit = -1;
 	@Override 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		//requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
 		setContentView(R.layout.msghistoryactivity);
+		//getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.contactlistitem);
+		
+		
+		Debugger.warn("MsgListHistory.onCreate");
+		
+		if (!SmsDbAdapter.isInit())
+			SmsDbAdapter.setContext(this);
+		if (!FetionDatabase.isInit())
+        	FetionDatabase.setInstance(this);
+		
+		sysConfig = SystemConfig.getInstance();
+		if (sysConfig.sipcProxyIp.equals("")) {
+	    	FetionDatabase.getInstance().getAccount(sysConfig);
+	    	FetionDatabase.getInstance().getUserInfo(sysConfig);
+	    	
+	    	
+		}
 		
 		intent = this.getIntent();
 		bundle = intent.getExtras();
@@ -54,23 +83,34 @@ public class MsgHistory extends Activity
 		msgno = bundle.getString("msgno");
 		nickname = bundle.getString("nickname");
 		
-		//WindowManager winManager=(WindowManager)getSystemService(Context.WINDOW_SERVICE);
-		//int width = getWindow().getDecorView().getWidth();
+			
+		
+		//TextView title = (TextView)findViewById(R.id.contactListItemName); 
+		//title.setText(nickname);
+		//ImageView icon = (ImageView)findViewById(R.id.contactListItemIcon);
+		//icon.setImageResource(R.drawable.icon);
+		//TextView number = (TextView)findViewById(R.id.contactListItemNumber); 
+		//number.setText(msgno);
+		
 		
 		this.setTitle(nickname);
-		//this.setTitle("与" + nickname + "(" + mobileno + ")聊天");
-		//int newwidth = getWindow().getDecorView().getWidth();
-		
-		
-		//Debugger.e("orig width=" +width + " new =" + newwidth);
 		
 		sipuri = bundle.getString("sipuri");
 		
 		btnSend = (Button)findViewById(R.id.btnSendMsg);
 		editMsgText = (EditText)findViewById(R.id.editMsgText);
+		String s = bundle.getString("msgtext");
+		
+		if (s != null) {
+			editMsgText.setText(s);
+			NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+	    	Debugger.error("cancel notification STATUS BAR");
+	    	nm.cancel(R.layout.msghistoryactivity);
+		}
+		
 		lvMsgList = (ListView)findViewById(R.id.lvMsgList);
 		
-		sysConfig = SystemConfig.getInstance();
+		
 		crypto = Crypto.getInstance();
 		
 		receiver = new SmsReceiver();
@@ -99,6 +139,8 @@ public class MsgHistory extends Activity
         		if (editMsgText.getText().toString().equals(""))
         			return;
         		
+        		isSending = true;
+        		
         		btnSend.setClickable(false);
         		editMsgText.setEnabled(false);
         		
@@ -111,7 +153,34 @@ public class MsgHistory extends Activity
         	}
         });
 		
+		ListView.OnCreateContextMenuListener MenuLis=new ListView.OnCreateContextMenuListener(){
+			  @Override
+			  public void onCreateContextMenu(ContextMenu menu, View v,
+					  ContextMenuInfo menuInfo) {
+				  menu.add(Menu.NONE,Menu_Item1,0,"复制");
+			  }
+		};
+		lvMsgList.setOnCreateContextMenuListener(MenuLis);
 	}
+	
+	public boolean onContextItemSelected(MenuItem item){
+		//关键代码在这里
+        AdapterView.AdapterContextMenuInfo menuInfo;
+        menuInfo =(AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+        //输出position
+        
+        smsList = SmsDbAdapter.getSmsList(mobileno);
+        AndroidSms sms = smsList.get(menuInfo.position);
+        Toast.makeText(MsgHistory.this, "消息已复制到剪贴板", 
+    		 Toast.LENGTH_LONG).show();
+        
+        ClipboardManager cm = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+        cm.setText (sms.body);
+        editMsgText.requestFocus();
+        return super.onContextItemSelected(item); 
+ 
+    }
+	protected static final int Menu_Item1=Menu.FIRST;
 	
 	private class SendMsgUiHandler extends Handler {
 		@Override
@@ -130,9 +199,11 @@ public class MsgHistory extends Activity
 			case CONNECTING_FAIL: {
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("不好意思，网络连接失败或超时，请重试。。。");
+				showStatusBarNotification(fm);
 				btnSend.setClickable(true);
 				editMsgText.setText(fm.msg);
         		editMsgText.setEnabled(true);
+        		isSending = false;
 				break;
 			}
 			case DISCONNECTING_SIPC:
@@ -141,6 +212,7 @@ public class MsgHistory extends Activity
 			case DISCONNECTING_FAIL: {
 				btnSend.setClickable(true);
 				editMsgText.setEnabled(true);
+				isSending = false;
 				break;
 			}
 			case WAIT_REGISTER:
@@ -152,8 +224,10 @@ public class MsgHistory extends Activity
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("给 " + fm.contact.nickName
 						+ "的消息发送失败了 :(  请重试。。。");
+				showStatusBarNotification(fm);
 				thread.addCommand(Command.DISCONNECT_SIPC, fm);
 				editMsgText.setText(fm.msg);
+				isSending = false;
 				break;
 			}
 			case REGISTER_SUCC: {
@@ -185,8 +259,10 @@ public class MsgHistory extends Activity
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("给 " + fm.contact.nickName
 						+ "的消息发送失败了 :(  请重试。。。");
+				showStatusBarNotification(fm);
 				thread.addCommand(Command.DISCONNECT_SIPC, fm);
 				editMsgText.setText(fm.msg);
+				isSending = false;
 				break;
 			}
 			case WAIT_SEND_MSG:
@@ -217,8 +293,10 @@ public class MsgHistory extends Activity
 				loadMsgList();
 				popNotify("给 " + fm.contact.nickName
 						+ "的消息发送失败了 :(  请重试。。。");
+				showStatusBarNotification(fm);
 				thread.addCommand(Command.DROP, fm);
 				editMsgText.setText(fm.msg);
+				isSending = false;
 				break;
 			}
 			case SEND_MSG_RESPONSE_TIMEOUT: {
@@ -244,18 +322,22 @@ public class MsgHistory extends Activity
 			{
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("不好意思，网络连接失败，请重试。。。");
+				showStatusBarNotification(fm);
 				btnSend.setClickable(true);
 				editMsgText.setText(fm.msg);
         		editMsgText.setEnabled(true);
+        		isSending = false;
 				break;
 			}
 			case NETWORK_TIMEOUT:
 			{
 				FetionMsg fm = (FetionMsg)ss.arg;
 				popNotify("不好意思，网络连接超时，请重试。。。");
+				showStatusBarNotification(fm);
 				btnSend.setClickable(true);
 				editMsgText.setText(fm.msg);
         		editMsgText.setEnabled(true);
+        		isSending = false;
 				break;
 			}
 			case THREAD_EXIT: 
@@ -276,15 +358,9 @@ public class MsgHistory extends Activity
     @Override
     protected void onResume() {
 
-    	//int width = getWindow().getDecorView().getWidth();
-		
-		
-		//this.setTitle("与" + nickname + "(" + mobileno + ")聊天");
-		//int newwidth = getWindow().getDecorView().getWidth();
-		
-		
-		//Debugger.e("orig width=" +width + " new =" + newwidth);
+
     	loadMsgList();
+    	editMsgText.requestFocus();
     	super.onResume();
     	
     }
@@ -301,13 +377,56 @@ public class MsgHistory extends Activity
     	Debugger.debug( "RECEIVER UNREGISTERED");
     	super.onStop();
 	}
+	
+	protected void showStatusBarNotification(FetionMsg fm) {
+		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		
+		Notification notification = new Notification(R.drawable.icon, "发送信息失败",
+                System.currentTimeMillis());
+		
+		PendingIntent contentIntent = null;
+		if (fm != null) {
+			contentIntent = PendingIntent.getActivity(this, 0,
+						new Intent(this, MsgHistory.class)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra("mobileno", fm.contact.getSmsNumber())
+                        .putExtra("msgno", fm.contact.getMsgNumber())
+                        .putExtra("nickname", fm.contact.getDisplayName())
+                        .putExtra("msgtext", fm.msg)
+                        .putExtra("sipuri", fm.contact.sipUri),
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+				
+	        notification.setLatestEventInfo(this, "发送给" + fm.contact.getDisplayName() + "的信息发送失败",
+	                       "飞信随手发", contentIntent);
+	
+	        nm.notify(R.layout.msghistoryactivity, notification);
+		}
+		else {
+			
+		}
+	}
+	
 	@Override
 	protected void onDestroy() {
     	//unregisterReceiver(receiver);
     	//Debugger.d( "RECEIVER UNREGISTERED");
-		thread.addCommand(Command.EXIT_AFTER_SEND, null);
+		//thread.addCommand(Command.DROP, null);
+		//thread.addCommand(Command.DISCONNECT_SIPC, null);
+		//thread.addCommand(Command.EXIT_AFTER_SEND, null);
     	super.onDestroy();
 	}
+	
+	/*@Override
+	public boolean onKeyDown(int keyCode, KeyEvent msg) {
+
+		if (keyCode == KeyEvent.KEYCODE_BACK && isSending) {
+			return true;
+		}
+		else {
+			return super.onKeyDown(keyCode, msg);
+		}
+	}*/
+	
 	@Override
 	protected void onStart() {
 		super.onStart();

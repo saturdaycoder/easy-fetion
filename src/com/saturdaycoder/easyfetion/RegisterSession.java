@@ -32,7 +32,12 @@ public class RegisterSession {
 	public void read() throws IOException 
 	{
 		SipcMessageParser parser = new SipcMessageParser();
-		this.response = (SipcResponse)parser.parse(is);
+		SocketMessage m = parser.parse(is);
+		if (m == null) {
+			Debugger.error("can not read message from socket");
+			throw new IOException ("null SIPC message");
+		}
+		this.response = (SipcResponse)m;
 		Debugger.debug( "received: " + response.toString());
 	}
 	

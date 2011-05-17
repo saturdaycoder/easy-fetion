@@ -37,12 +37,17 @@ public class Network {
 		Debugger.debug("SIPC connect to " + ip + ":" + port);
 		if (sipcSocket == null || sipcSocket.isClosed()) {
 			try {
-				sipcSocket = new Socket(ip, port);
+				//sipcSocket = new Socket(ip, port);
+				sipcSocket = new Socket();
+				InetSocketAddress addr = new InetSocketAddress(ip, port);
+				sipcSocket.connect(addr, 5000);
 				sipcSocket.setSoLinger(false, 0);
 			} catch (IllegalArgumentException e) {
+				sipcSocket = null;
 				Debugger.error("connecting SIPC illegal argument: " + e.toString());
 				throw new IOException ("SIPC illegal argument");
 			} catch (IOException e) {
+				sipcSocket = null;
 				Debugger.error("connecting SIPC IO error: " + e.toString());
 				throw e;
 			}

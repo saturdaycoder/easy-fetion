@@ -58,7 +58,8 @@ public class EasyFetion extends Activity
     private Map<String, FetionContact> contactList;
     private HttpThread loginThread;
     private SipcThread refreshThread;
-    
+    //private boolean needClearContactDb = false;
+    private boolean clearContactDbOnLoginSucc = false;
     
     private void showerr(String TAG, String msg)
     {
@@ -129,23 +130,31 @@ public class EasyFetion extends Activity
 				
 				break;
 			}
-    		case AUTHENTICATE_SUCC:
+    		case AUTHENTICATE_SUCC: {
+    			FetionDatabase.getInstance().clearContacts();
+    			Iterator<String> iter = contactList.keySet().iterator();
+        		while (iter.hasNext()) {
+        			String uri = iter.next();
+        			FetionContact c = contactList.get(uri);
+        			FetionDatabase.getInstance().setContact(c);
+        		}
+        		loadContactList();
 	    		refreshThread.addCommand(SipcThread.Command.GET_CONTACTS, null);
 	    		break;
-    		case AUTHENTICATE_FAIL:
+    		}
+    		case AUTHENTICATE_FAIL: {
     			refreshThread.addCommand(SipcThread.Command.DISCONNECT_SIPC, null);
     			try {
 					dismissDialog(DIALOG_REFRESH_PROGRESS);
 				} catch (Exception e) {}
 				showerr(TAG, "账号验证失败了。。。");
 				break;
+    		}
     		case WAIT_GET_CONTACT:
     		case CONTACT_GETTING:
     			break;
     		case CONTACT_GET_SUCC: {
-    			
 				loginThread.addCommand(HttpThread.Command.GET_PORTRAIT, contactList);
-				FetionDatabase.getInstance().setUserInfo(sysConfig);
 				
 				loadContactList();
 				dismissDialog(DIALOG_REFRESH_PROGRESS);
@@ -224,7 +233,18 @@ public class EasyFetion extends Activity
 				
 				break;
 			}
-			case LOGIN_FAIL: 
+			case LOGIN_FAIL:
+				clearContactDbOnLoginSucc = false;
+				// Roll back the saved account
+				FetionDatabase.getInstance().getAccount(sysConfig);
+				FetionDatabase.getInstance().getUserInfo(sysConfig);
+				FetionContact contacts[] = FetionDatabase.getInstance().getContacts();
+				loadContactList();
+    			for (FetionContact c: contacts) {
+    				contactList.put(c.sipUri, c);
+    			}
+    			loadContactList();
+				
 				try {
 					dismissDialog(DIALOG_LOGIN_PROGRESS);
 					showerr(TAG, "登录失败了，检查一下账号和密码有没有写错？");
@@ -240,8 +260,11 @@ public class EasyFetion extends Activity
 				break;
 			case LOGIN_SUCC: 
 				FetionDatabase.getInstance().setAccount(sysConfig);
-				FetionDatabase.getInstance().clearContacts();
-
+				FetionDatabase.getInstance().clearUserInfo();
+				if (clearContactDbOnLoginSucc) {
+					FetionDatabase.getInstance().clearContacts();
+				}
+				clearContactDbOnLoginSucc = false;
 	    		loginThread.addCommand(Command.DOWNLOAD_CONFIG, null);
 				break;	
 			case CONFIG_DOWNLOAD_SUCC:
@@ -253,13 +276,13 @@ public class EasyFetion extends Activity
 				}
 				FetionDatabase.getInstance().setUserInfo(sysConfig);
 				
-				
 				showDialog(DIALOG_REFRESH_PROGRESS);
 				sysConfig.contactVersion = "0";
 	    		
 				refreshThread.addCommand(SipcThread.Command.CONNECT_SIPC, null);
 				break;
 			case CONFIG_DOWNLOAD_FAIL:
+				//FetionDatabase.getInstance().setUserInfo(sysConfig);
 				try { 
 					dismissDialog(DIALOG_LOGIN_PROGRESS);
 				} catch (Exception e) {}
@@ -402,9 +425,24 @@ public class EasyFetion extends Activity
 	    		if (!bundle.containsKey("mobileno")) {
 	    			Debugger.error( "not contain mobileno");
 	    		}
-	    		sysConfig.mobileNumber = bundle.getString("mobileno");
-	    		sysConfig.userPassword = bundle.getString("passwd");
-	    		lastLoginAcc = sysConfig.mobileNumber;
+	    		
+	    		
+	    		String m = bundle.getString("mobileno");
+	    		String p = bundle.getString("passwd");
+	    		lastLoginAcc = m;
+	    		
+	    		if (!m.equals(sysConfig.mobileNumber)) {
+	    			clearContactDbOnLoginSucc = true;
+	    		} else {
+	    			clearContactDbOnLoginSucc = false;
+	    		}
+	    		
+	    		sysConfig.reset();
+	    		sysConfig.mobileNumber = m;
+	    		sysConfig.userPassword = p;
+				contactList.clear();
+				loadContactList();
+	    		
 	    		if (sysConfig.mobileNumber == null || sysConfig.userPassword == null) {
 	    			Debugger.error( "retrieving user account:" + 
 	    					sysConfig.mobileNumber + ", " + sysConfig.userPassword);
@@ -620,18 +658,23 @@ public class EasyFetion extends Activity
 				sysConfig.userPassword = "";
 				sysConfig.sId = "";
 				sysConfig.userId = "";*/
-				sysConfig.reset();
-				contactList.clear();
+				
 				
 				startActivityForResult(intent, INTENT_ACC_SET_DIALOG);
                 break;  
             case MENU_REFRESH_ID:  
-            	sysConfig.sId = "";
-				sysConfig.userId = "";
+            	clearContactDbOnLoginSucc = false;
+            	String m = sysConfig.mobileNumber;
+            	String p = sysConfig.userPassword;
+            	sysConfig.reset();
+            	sysConfig.mobileNumber = m;
+            	sysConfig.userPassword = p;
 				contactList.clear();
+				loadContactList();
+				
 				showDialog(DIALOG_REFRESH_PROGRESS);
-				FetionDatabase.getInstance().clearContacts();
-	    		sysConfig.contactVersion = "0";
+				
+	    		//sysConfig.contactVersion = "0";
 	    		
 				loginThread.addCommand(Command.LOGIN, null);
                 break;  

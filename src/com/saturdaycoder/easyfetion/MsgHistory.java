@@ -108,7 +108,10 @@ public class MsgHistory extends Activity
 			editMsgText.setText(s);
 			NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 	    	Debugger.error("cancel notification STATUS BAR");
-	    	nm.cancel(R.layout.msghistoryactivity);
+	    	int nid = bundle.getInt("notificationid");
+	    	Debugger.debug("CANCELING NOTIFICATION " + nid);
+			nm.cancel(nid);
+			
 		}
 		
 		lvMsgList = (ListView)findViewById(R.id.lvMsgList);
@@ -381,6 +384,8 @@ public class MsgHistory extends Activity
     	super.onStop();
 	}
 	
+	protected static int notificationId = 1; 
+	
 	protected void showStatusBarNotification(FetionMsg fm) {
 		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		
@@ -389,20 +394,28 @@ public class MsgHistory extends Activity
 		
 		PendingIntent contentIntent = null;
 		if (fm != null) {
+			int nid = 0;
+			try {
+				nid = Integer.parseInt(fm.contact.userId);
+			} catch (Exception e) {
+				
+			}
 			contentIntent = PendingIntent.getActivity(this, 0,
 						new Intent(this, MsgHistory.class)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         .putExtra("mobileno", fm.contact.getSmsNumber())
                         .putExtra("msgno", fm.contact.getMsgNumber())
                         .putExtra("nickname", fm.contact.getDisplayName())
                         .putExtra("msgtext", fm.msg)
-                        .putExtra("sipuri", fm.contact.sipUri),
+                        .putExtra("sipuri", fm.contact.sipUri)
+                        .putExtra("notificationid", nid),
                         PendingIntent.FLAG_UPDATE_CURRENT);
 				
 	        notification.setLatestEventInfo(this, "发送给" + fm.contact.getDisplayName() + "的信息发送失败",
 	                       "飞信随手发", contentIntent);
 	
-	        nm.notify(R.layout.msghistoryactivity, notification);
+	        nm.notify(Integer.parseInt(fm.contact.userId), notification);
+	        
 		}
 		else {
 			

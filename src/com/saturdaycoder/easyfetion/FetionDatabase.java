@@ -13,7 +13,7 @@ import android.database.sqlite.SQLiteDatabase;
 public class FetionDatabase extends SQLiteOpenHelper  
 {
 	private Context context;
-	private static final String DATABASE_NAME = "userdb";
+	private static final String DATABASE_NAME = "userdb.sqlite";
 	private static final int DB_VERSION = 1;
 	private static final boolean encryptUserPasswd = true;
 	protected FetionDatabase(Context context) {
@@ -143,7 +143,8 @@ public class FetionDatabase extends SQLiteOpenHelper
 				//+ " blood_type INTEGER, "
 				//+ " occupation TEXT, "
 				//+ " hobby TEXT, "
-				+ "score_level=" + contact.scoreLevel);
+				+ "score_level=" + contact.scoreLevel
+				+ " where sid='" + contact.userId + "'");
 				
 
 		}
@@ -443,6 +444,23 @@ public class FetionDatabase extends SQLiteOpenHelper
 			sysConfig.ssic = "";
 		}
 		
+	}
+	
+	public void clearUserInfo() 
+	{
+		SQLiteDatabase db = this.getWritableDatabase();
+		db.execSQL("update user set config_servers_version = '' "
+				+ ", config_parameters_version = '' "
+				+ ", config_hints_version = '' "
+				+ ", sipc_proxy_ip = '' "
+				+ ", sipc_proxy_port = -1 "
+				+ ", portrait_servers_name = '' "
+				+ ", portrait_servers_path  = '' "
+				+ ", personal_version = '' "
+				+ ", custom_config_version = '' "
+				+ ", contact_version = '' "
+				+ ", ssic = '' "
+				+ " where sid = ''");
 	}
 	
 	public void setUserInfo(SystemConfig sysConfig)

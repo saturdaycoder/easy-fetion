@@ -128,15 +128,15 @@ public class FetionDatabase extends SQLiteOpenHelper
 				+ "sid='" + contact.userId + "',"
 				+ "mobile_no='" + contact.mobileNumber + "',"
 				//+ " basic_service_status INTEGER, "
-				+ "carrier='" + contact.carrier + "',"
+				+ "carrier='" + contact.carrier.replace("'", "''") + "',"
 				+ "carrier_status=" + contact.carrierStatus + ","
 				+ "portrait_crc='" + contact.portraitCrc + "',"
 				+ "name='" + contact.localName.replace("'", "''") + "',"
 				+ "nickname='" + contact.nickName.replace("'", "''") + "',"
 				+ "gender=" + contact.gender + ","
-				+ "birth_date='" + contact.birthday + "',"
+				+ "birth_date='" + contact.birthday.replace("'", "''") + "',"
 				//+ " birthday_valid INTEGER, "
-				+ "impresa='" + contact.impression + "',"
+				+ "impresa='" + contact.impression.replace("'", "''") + "',"
 				//+ " carrier_region TEXT, "
 				//+ " user_region TEXT, "
 				//+ " profile TEXT, "
@@ -155,10 +155,10 @@ public class FetionDatabase extends SQLiteOpenHelper
 					"impresa," +
 					"score_level) values('" + contact.sipUri + "', '" + contact.version
 					+ "','" + contact.userId + "','" + contact.mobileNumber + "','"
-					+ contact.carrier + "'," + contact.carrierStatus + ",'"
+					+ contact.carrier.replace("'", "''") + "'," + contact.carrierStatus + ",'"
 					+ contact.portraitCrc + "','" + contact.localName.replace("'", "''") + "','"
 					+ contact.nickName.replace("'", "''") + "'," + contact.gender + ",'"
-					+ contact.birthday + "','" + contact.impression + "',"
+					+ contact.birthday.replace("'", "''") + "','" + contact.impression.replace("'", "''") + "',"
 					+ contact.scoreLevel + ")");
 		}
 		/*if (!contact.portrait.equals("")) {
@@ -348,7 +348,7 @@ public class FetionDatabase extends SQLiteOpenHelper
 			+ "'" + savedPasswd + "', "
 			+ "'" + sysConfig.userId + "', "
 			+ "'" + sysConfig.mobileNumber + "', "
-			+ "'" + sysConfig.userUri + "' " 
+			+ "'" + sysConfig.userUri.replace("'", "''") + "' " 
 			+ " where not exists (select * from user where sid = '" 
 			+ sysConfig.sId + "')");
 		Debugger.debug( "INSERT NEW ACC");

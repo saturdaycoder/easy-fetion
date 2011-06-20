@@ -503,6 +503,13 @@ public class SipcThread extends Thread{
         notifyState(State.WAIT_SEND_MSG, fm);
     	
     	SipcMessageParser parser = new SipcMessageParser();
+    	
+    	if (sysConfig == null || sysConfig.sId == null) {
+    		notifyState(State.SEND_MSG_FAIL, fm);
+			Debugger.debug( "sysconfig SID null");
+			return;
+    	}
+    	
     	SipcCommand sendMsgCmd = new SipcSendMsgCommand(sysConfig.sId, 
 				fm.contact.sipUri, fm.msg);
     	
@@ -627,7 +634,7 @@ public class SipcThread extends Thread{
     		}
     	}
     	notifyState(State.THREAD_EXIT, null);
-    	//popNotify("程序完全退出");
+    	//popNotify("ç¨‹åº�å®Œå…¨é€€å‡º");
     	Looper.myLooper().quit();
     }
 
@@ -652,8 +659,8 @@ public class SipcThread extends Thread{
             	doAuthenticate(arg);
 	            break;
             case GET_CONTACTS:
-                //doGetContacts();
-            	doSubContacts();
+                doGetContacts();
+            	//doSubContacts();
                 break;
             case DROP:
                 doDrop(arg);
